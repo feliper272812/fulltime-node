@@ -1,0 +1,12 @@
+{
+  "workbench.externalBrowser": "chrome",
+  "editor.wordWrap": "on",
+  "liveServer.settings.CustomBrowser": "chrome",
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "files.associations": {
+    "*.ejs": "html"
+  },
+  "html.validate.scripts": false,
+  "html.validate.styles": false
+}
