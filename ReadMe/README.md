@@ -18,6 +18,14 @@ altíssima e como os servidores web são virtuais, gerados pelo proxy reverso, e
 uma escalabilidade imensa. Além disso o proxy reverso fornece o balanceamento de carga, que é justamente equilibrar estas requisições 
 entre as instâncias do servidor web.
 
+---
+Loop de eventos de NodeJs
+
+![Diagrama Event Loop](ReadMe/EventLoop-1.jpg)
+
+---
+
+
 ## 🏗️ Diagrama de Arquitetura (Proxy Reverso e Balanceamento)
 
 ```mermaid

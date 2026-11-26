@@ -1,5 +1,0 @@
----
-
-![Diagrama Event Loop](ReadMe/EventLoop-1.jpg)
-
----
