@@ -19,12 +19,10 @@ uma escalabilidade imensa. Além disso o proxy reverso fornece o balanceamento d
 entre as instâncias do servidor web.
 
 ---
-Loop de eventos de NodeJs
+
+## Loop de eventos de NodeJs
 
 ![Diagrama Event Loop](ReadMe/EventLoop-1.jpg)
-
----
-
 
 ## 🏗️ Diagrama de Arquitetura (Proxy Reverso e Balanceamento)
 
