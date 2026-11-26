@@ -1,0 +1,1122 @@
+<!-- =========================================================
+ARQUIVO: jsonreader5.html
+
+EDITOR JSON HIERÁRQUICO
+
+  Tecnologias:
+  - HTML5
+  - CSS3
+  - Bootstrap 5.3
+
+  Tema:
+  - Light
+  - Dark
+  - Auto
+
+  Autor: Felipe Rodrigues - FullTime Technology
+========================================================= -->
+
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+
+    <!-- =====================================================
+         META
+    ====================================================== -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor JSON</title>
+
+    <!-- FALLBACKS (definidos ANTES de serem usados pelos onerror abaixo) -->
+    <script>
+      const carregarFallbackTema = () => {
+        alert('color-modes.js local não carregou. Usando CDN oficial do Bootstrap 5.3 como reserva.');
+        console.warn('color-modes.js local não carregou. Usando CDN oficial do Bootstrap 5.3 como reserva.');
+
+        const cdnScript = document.createElement('script');
+        cdnScript.src = 'https://getbootstrap.com/docs/5.3/assets/js/color-modes.js';
+        document.head.appendChild(cdnScript);
+      };
+
+      const carregarFallbackCss = (link) => {
+        link.onerror = null;
+        alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+        console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+
+        link.integrity = 'sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH';
+        link.crossOrigin = 'anonymous';
+        link.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+      };
+    </script>
+
+    <!-- SCRIPT OFICIAL DE TEMAS BOOTSTRAP 5.3 (o seletor de tema fica na NAV) -->
+    <script src="/js/color-modes.js" onerror="carregarFallbackTema()"></script>
+
+    <!-- BOOTSTRAP 5.3.3 CSS LOCAL (fallback automático via onerror) -->
+    <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet" onerror="carregarFallbackCss(this)">
+
+    <!-- =====================================================
+         CSS
+    ====================================================== -->
+
+    <style>
+
+        /* =================================================
+           ROOT
+           Espaço vertical igual em cima (NAV → card)
+           e embaixo (card → footer)
+        ================================================== */
+
+        :root{
+            --gap-vertical: 2px;
+            --nav-h: 58px;      /* valores iniciais; o script de layout mede os reais */
+            --footer-h: 38px;
+
+            --transition-speed: .30s;
+        }
+
+        /* =================================================
+           BODY / MAIN
+        ================================================== */
+
+        html, body{
+            height: 100% !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+        }
+
+        body{
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
+            padding: var(--nav-h) 0 var(--footer-h) 0 !important;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* MAIN: sem espaços laterais, só o espaço vertical */
+        .main-wrapper{
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: var(--gap-vertical) 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* =================================================
+           CARD (de ponta a ponta)
+        ================================================== */
+
+        .card-custom{
+            border-radius: 0;
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Barra de ferramentas: fixa no topo do card */
+        .card-custom .card-body-toolbar{
+            flex: 0 0 auto;
+        }
+
+        /* Área do editor + preview: é ela que rola */
+        .card-custom .card-body-scroll{
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        /* =================================================
+           TOOLBAR
+        ================================================== */
+
+        .toolbar{
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* =================================================
+           JSON NODE
+        ================================================== */
+
+        .json-node{
+            margin-left: 18px;
+            margin-top: 16px;
+            padding-left: 16px;
+            border-left: 4px solid var(--bs-success);
+            position: relative;
+        }
+
+        /* =================================================
+           NODE HEADER
+        ================================================== */
+
+        .node-header{
+            background: var(--bs-tertiary-bg);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all var(--transition-speed);
+            backdrop-filter: blur(8px);
+        }
+
+        [data-bs-theme="dark"] .node-header{
+            background: rgba(33,37,41,.85);
+        }
+
+        [data-bs-theme="light"] .node-header{
+            background: rgba(255,255,255,.92);
+        }
+
+        /* =================================================
+           TITLES
+        ================================================== */
+
+        .node-title{
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--bs-secondary-color);
+        }
+
+        /* =================================================
+           LABELS / INPUTS (restritos ao conteúdo da página,
+           para não interferir na NAV e no FOOTER)
+        ================================================== */
+
+        .main-wrapper .form-label{
+            font-weight: 600;
+            color: var(--bs-body-color);
+        }
+
+        .main-wrapper .form-control,
+        .main-wrapper .form-select{
+            background: var(--bs-body-bg) !important;
+            color: var(--bs-body-color) !important;
+            border: 1px solid var(--bs-border-color);
+            transition: all var(--transition-speed);
+            border-radius: 10px;
+        }
+
+        .main-wrapper .form-control:focus,
+        .main-wrapper .form-select:focus{
+            background: var(--bs-body-bg) !important;
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-success);
+            box-shadow: 0 0 0 .25rem rgba(var(--bs-success-rgb), .20);
+        }
+
+        .main-wrapper .form-control:disabled{
+            background: var(--bs-secondary-bg) !important;
+            color: var(--bs-secondary-color) !important;
+            opacity: 1;
+        }
+
+        /* =================================================
+           TEXTAREA
+        ================================================== */
+
+        textarea{
+            font-family: Consolas, monospace;
+            resize: vertical;
+        }
+
+        #preview{
+            min-height: 320px;
+            background: var(--bs-secondary-bg) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        /* =================================================
+           BUTTONS
+        ================================================== */
+
+        .main-wrapper .btn{
+            transition: all .2s ease;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .main-wrapper .btn:hover{
+            transform: translateY(-1px);
+        }
+
+        /* =================================================
+           ALERT
+        ================================================== */
+
+        .main-wrapper .alert{
+            border-radius: 12px;
+            border: 1px solid rgba(var(--bs-info-rgb), .30);
+        }
+
+        /* =================================================
+           BADGE
+        ================================================== */
+
+        .badge-level{
+            font-size: 11px;
+        }
+
+        /* =================================================
+           SCROLLBAR
+        ================================================== */
+
+        ::-webkit-scrollbar{
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track{
+            background: var(--bs-secondary-bg);
+        }
+
+        ::-webkit-scrollbar-thumb{
+            background: var(--bs-secondary-color);
+            border-radius: 20px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover{
+            background: var(--bs-success);
+        }
+
+        #fileInput::file-selector-button {
+            background-color: var(--bs-primary);
+            color: #fff;
+            border-color: var(--bs-primary);
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        #fileInput:hover::file-selector-button {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+<!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+    <div id="nav-sistema-placeholder"><%- include('partials/nav-sistema') %></div>
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+    <main class="main-wrapper">
+        <div class="card card-custom border-0">
+
+            <!-- HEADER -->
+            <div class="card-header bg-success text-white text-center py-2">
+                <h4 class="mb-0">🗂️ Editor JSON Hierárquico</h4>
+            </div>
+
+            <!-- TOOLBAR -->
+            <div class="card-body card-body-toolbar py-2 border-bottom">
+                <div class="toolbar">
+
+                    <input
+                        type="file"
+                        id="fileInput"
+                        class="form-control form-control-sm"
+                        accept=".json"
+                        style="max-width:320px;">
+
+                    <div class="vr"></div>
+
+                    <button class="btn btn-sm btn-success" id="btnNovo">
+                        🆕 Novo JSON
+                    </button>
+
+                    <button class="btn btn-sm btn-success" id="btnAdicionarRaiz">
+                        ➕ Adicionar Campo Raiz
+                    </button>
+
+                    <button class="btn btn-sm btn-warning" id="btnExportar">
+                        ⬇ Exportar JSON
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- EDITOR + PREVIEW (área com rolagem) -->
+            <div class="card-body card-body-scroll p-3">
+
+                <!-- EDITOR -->
+                <div id="editor"></div>
+
+                <!-- PREVIEW -->
+                <div class="mt-4">
+                    <label class="form-label">Preview JSON</label>
+                    <textarea
+                        id="preview"
+                        class="form-control"
+                        readonly></textarea>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- RODAPÉ FIXO (FOOTER) -->
+    <div id="footer-placeholder"><%- include('partials/footer') %></div>
+
+    <!-- DEPENDÊNCIAS DE SCRIPTS DO ECOSSISTEMA CORE -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Fallback estável apontando para o bundle completo do Bootstrap JS na jsDelivr oficial
+        if (typeof bootstrap === 'undefined') {
+            alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"><\/script>');
+        }
+    </script>
+
+    <!-- AJUSTE DO ESPAÇO DA NAV E DO RODAPÉ -->
+    <script>
+        (function () {
+            const raiz = document.documentElement.style;
+
+            // Mede os componentes incluídos pelo EJS e reserva espaço apenas para os fixos.
+            function medirLayout() {
+                const nav = document.querySelector('#nav-sistema-placeholder nav, #nav-sistema-placeholder .navbar');
+                const rodape = document.querySelector('#footer-placeholder footer, #footer-placeholder > *');
+
+                if (nav) {
+                    const fixo = getComputedStyle(nav).position === 'fixed';
+                    raiz.setProperty('--nav-h', fixo ? Math.ceil(nav.getBoundingClientRect().bottom) + 'px' : '0px');
+                }
+                if (rodape) {
+                    const fixo = getComputedStyle(rodape).position === 'fixed';
+                    raiz.setProperty('--footer-h', fixo ? Math.ceil(window.innerHeight - rodape.getBoundingClientRect().top) + 'px' : '0px');
+                }
+            }
+
+            let agendado = false;
+            function agendarMedicao() {
+                if (agendado) return;
+                agendado = true;
+                requestAnimationFrame(() => { agendado = false; medirLayout(); });
+            }
+
+            ['nav-sistema-placeholder', 'footer-placeholder'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) new MutationObserver(agendarMedicao).observe(el, { childList: true, subtree: true });
+            });
+
+            window.addEventListener('resize', agendarMedicao);
+            window.addEventListener('load', agendarMedicao);
+
+            document.addEventListener('DOMContentLoaded', () => {
+                agendarMedicao();
+            });
+        })();
+    </script>
+
+<!-- =====================================================
+     JAVASCRIPT DO EDITOR
+     (o controle de tema próprio foi removido: o seletor "Tema" fica na NAV)
+===================================================== -->
+
+<script>
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    let jsonData = {};
+
+    const editor =
+        document.getElementById("editor");
+
+    const preview =
+        document.getElementById("preview");
+
+    // =====================================================
+    // RENDER
+    // =====================================================
+
+    function renderEditor(){
+
+        editor.innerHTML = "";
+
+        renderObject(
+            jsonData,
+            editor,
+            0
+        );
+
+        updatePreview();
+    }
+
+    // =====================================================
+    // RENDER OBJECT
+    // =====================================================
+
+    function renderObject(
+        obj,
+        parent,
+        level
+    ){
+
+        Object.keys(obj).forEach(key => {
+
+            const value = obj[key];
+
+            const node =
+                document.createElement("div");
+
+            node.className =
+                "json-node";
+
+            // HEADER
+
+            const header =
+                document.createElement("div");
+
+            header.className =
+                "node-header";
+
+            // TITLE
+
+            const title =
+                document.createElement("div");
+
+            title.className =
+                "node-title";
+
+            title.innerHTML = `
+                Hierarquia:
+                <span class="badge bg-secondary badge-level">
+                    Nível ${level}
+                </span>
+            `;
+
+            // ROW
+
+            const row =
+                document.createElement("div");
+
+            row.className =
+                "row g-3 align-items-end";
+
+            // CAMPO
+
+            const colCampo =
+                document.createElement("div");
+
+            colCampo.className =
+                "col-md-3";
+
+            colCampo.innerHTML = `
+                <label class="form-label">
+                    Campo
+                </label>
+            `;
+
+            const campoInput =
+                document.createElement("input");
+
+            campoInput.type = "text";
+
+            campoInput.className =
+                "form-control";
+
+            campoInput.value = key;
+
+            colCampo.appendChild(
+                campoInput
+            );
+
+            // TIPO
+
+            const colTipo =
+                document.createElement("div");
+
+            colTipo.className =
+                "col-md-2";
+
+            colTipo.innerHTML = `
+                <label class="form-label">
+                    Tipo
+                </label>
+            `;
+
+            const tipoSelect =
+                document.createElement("select");
+
+            tipoSelect.className =
+                "form-select";
+
+            [
+                "string",
+                "number",
+                "boolean",
+                "object",
+                "array"
+            ].forEach(type => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value = type;
+
+                option.textContent =
+                    type;
+
+                if(
+                    getType(value)
+                    === type
+                ){
+
+                    option.selected = true;
+                }
+
+                tipoSelect.appendChild(
+                    option
+                );
+
+            });
+
+            colTipo.appendChild(
+                tipoSelect
+            );
+
+            // VALOR
+
+            const colValor =
+                document.createElement("div");
+
+            colValor.className =
+                "col-md-4";
+
+            colValor.innerHTML = `
+                <label class="form-label">
+                    Valor
+                </label>
+            `;
+
+            const valorInput =
+                document.createElement("input");
+
+            valorInput.type = "text";
+
+            valorInput.className =
+                "form-control";
+
+            if(
+                typeof value !== "object"
+                || value === null
+            ){
+
+                valorInput.value = value;
+
+            }else{
+
+                valorInput.value =
+                    JSON.stringify(value);
+
+                valorInput.disabled = true;
+            }
+
+            colValor.appendChild(
+                valorInput
+            );
+
+            // ACTIONS
+
+            const colAcoes =
+                document.createElement("div");
+
+            colAcoes.className =
+                "col-md-3";
+
+            const actions =
+                document.createElement("div");
+
+            actions.className =
+                "d-flex gap-2";
+
+            const btnAdd =
+                document.createElement("button");
+
+            btnAdd.className =
+                "btn btn-success w-100";
+
+            btnAdd.innerHTML =
+                "+ Filho";
+
+            const btnDelete =
+                document.createElement("button");
+
+            btnDelete.className =
+                "btn btn-danger w-100";
+
+            btnDelete.innerHTML =
+                "Excluir";
+
+            actions.appendChild(
+                btnAdd
+            );
+
+            actions.appendChild(
+                btnDelete
+            );
+
+            colAcoes.appendChild(
+                actions
+            );
+
+            // BUILD
+
+            row.appendChild(
+                colCampo
+            );
+
+            row.appendChild(
+                colTipo
+            );
+
+            row.appendChild(
+                colValor
+            );
+
+            row.appendChild(
+                colAcoes
+            );
+
+            header.appendChild(
+                title
+            );
+
+            header.appendChild(
+                row
+            );
+
+            node.appendChild(
+                header
+            );
+
+            // EVENTS
+
+            campoInput.addEventListener(
+                "change",
+                () => {
+
+                    if(
+                        campoInput.value
+                        === key
+                    ){
+                        return;
+                    }
+
+                    obj[
+                        campoInput.value
+                    ] = obj[key];
+
+                    delete obj[key];
+
+                    renderEditor();
+
+                }
+            );
+
+            tipoSelect.addEventListener(
+                "change",
+                () => {
+
+                    switch(
+                        tipoSelect.value
+                    ){
+
+                        case "string":
+                            obj[key] = "";
+                            break;
+
+                        case "number":
+                            obj[key] = 0;
+                            break;
+
+                        case "boolean":
+                            obj[key] = true;
+                            break;
+
+                        case "object":
+                            obj[key] = {};
+                            break;
+
+                        case "array":
+                            obj[key] = [];
+                            break;
+                    }
+
+                    renderEditor();
+
+                }
+            );
+
+            valorInput.addEventListener(
+                "input",
+                () => {
+
+                    switch(
+                        tipoSelect.value
+                    ){
+
+                        case "string":
+
+                            obj[key] =
+                                valorInput.value;
+
+                            break;
+
+                        case "number":
+
+                            obj[key] =
+                                Number(
+                                    valorInput.value
+                                );
+
+                            break;
+
+                        case "boolean":
+
+                            obj[key] =
+                                valorInput.value
+                                === "true";
+
+                            break;
+                    }
+
+                    updatePreview();
+
+                }
+            );
+
+            btnAdd.addEventListener(
+                "click",
+                () => {
+
+                    if(
+                        typeof obj[key]
+                        !== "object"
+                        || obj[key] === null
+                    ){
+
+                        alert(
+                            "Somente objetos e arrays podem receber filhos."
+                        );
+
+                        return;
+                    }
+
+                    if(
+                        Array.isArray(
+                            obj[key]
+                        )
+                    ){
+
+                        obj[key].push({
+                            novoCampo:""
+                        });
+
+                    }else{
+
+                        obj[key][
+                            "novoCampo"
+                        ] = "";
+                    }
+
+                    renderEditor();
+
+                }
+            );
+
+            btnDelete.addEventListener(
+                "click",
+                () => {
+
+                    delete obj[key];
+
+                    renderEditor();
+
+                }
+            );
+
+            // CHILDREN
+
+            if(
+                typeof value === "object"
+                && value !== null
+            ){
+
+                const children =
+                    document.createElement(
+                        "div"
+                    );
+
+                children.className =
+                    "children";
+
+                if(
+                    Array.isArray(value)
+                ){
+
+                    value.forEach(
+                        (
+                            item,
+                            index
+                        ) => {
+
+                            const arr =
+                                document.createElement(
+                                    "div"
+                                );
+
+                            arr.className =
+                                "json-node";
+
+                            arr.innerHTML = `
+                                <div class="alert alert-info py-2">
+                                    Array índice:
+                                    <strong>${index}</strong>
+                                </div>
+                            `;
+
+                            if(
+                                typeof item
+                                === "object"
+                            ){
+
+                                renderObject(
+                                    item,
+                                    arr,
+                                    level + 1
+                                );
+                            }
+
+                            children.appendChild(
+                                arr
+                            );
+
+                        }
+                    );
+
+                }else{
+
+                    renderObject(
+                        value,
+                        children,
+                        level + 1
+                    );
+                }
+
+                node.appendChild(
+                    children
+                );
+            }
+
+            parent.appendChild(
+                node
+            );
+
+        });
+    }
+
+    // =====================================================
+    // TYPE
+    // =====================================================
+
+    function getType(value){
+
+        if(
+            Array.isArray(value)
+        ){
+            return "array";
+        }
+
+        return typeof value;
+    }
+
+    // =====================================================
+    // PREVIEW
+    // =====================================================
+
+    function updatePreview(){
+
+        preview.value =
+            JSON.stringify(
+                jsonData,
+                null,
+                4
+            );
+    }
+
+    // =====================================================
+    // NEW JSON
+    // =====================================================
+
+    document
+        .getElementById(
+            "btnNovo"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                jsonData = {};
+
+                renderEditor();
+
+            }
+        );
+
+    // =====================================================
+    // ADD ROOT
+    // =====================================================
+
+    document
+        .getElementById(
+            "btnAdicionarRaiz"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                jsonData[
+                    "novoCampo"
+                ] = "";
+
+                renderEditor();
+
+            }
+        );
+
+    // =====================================================
+    // IMPORT JSON
+    // =====================================================
+
+    document
+        .getElementById(
+            "fileInput"
+        )
+        .addEventListener(
+            "change",
+            e => {
+
+                const file =
+                    e.target.files[0];
+
+                if(!file){
+                    return;
+                }
+
+                const reader =
+                    new FileReader();
+
+                reader.onload =
+                    function(event){
+
+                    try{
+
+                        jsonData =
+                            JSON.parse(
+                                event.target.result
+                            );
+
+                        renderEditor();
+
+                    }catch(error){
+
+                        alert(
+                            "JSON inválido."
+                        );
+
+                        console.error(
+                            error
+                        );
+                    }
+                };
+
+                reader.readAsText(
+                    file
+                );
+
+            }
+        );
+
+    // =====================================================
+    // EXPORT JSON
+    // =====================================================
+
+    document
+        .getElementById(
+            "btnExportar"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                const blob =
+                    new Blob(
+                        [
+                            JSON.stringify(
+                                jsonData,
+                                null,
+                                4
+                            )
+                        ],
+                        {
+                            type:
+                                "application/json"
+                        }
+                    );
+
+                const url =
+                    URL.createObjectURL(
+                        blob
+                    );
+
+                const a =
+                    document.createElement(
+                        "a"
+                    );
+
+                a.href = url;
+
+                a.download =
+                    "dados.json";
+
+                a.click();
+
+                URL.revokeObjectURL(
+                    url
+                );
+
+            }
+        );
+
+    // =====================================================
+    // INIT
+    // =====================================================
+
+    renderEditor();
+
+</script>
+
+</body>
+</html>

@@ -447,6 +447,26 @@ app.get('/index-sistema', exigirAutenticacao, (req, res) => {
   res.render('index-sistema');
 });
 
+app.get('/jsonreader5', exigirAutenticacao, (req, res) => {
+  res.render('jsonreader5');
+});
+
+app.get('/remover-fundo', exigirAutenticacao, (req, res) => {
+  res.render('remover-fundo');
+});
+
+app.get('/video-chat', exigirAutenticacao, (req, res) => {
+  res.render('webRTCvideoChat');
+});
+
+app.get('/apresentador', exigirAutenticacao, (req, res) => {
+  res.render('apresentador');
+});
+
+app.get('/conversor-webm-mp4', exigirAutenticacao, (req, res) => {
+  res.render('conversorWebm-MP4');
+});
+
 app.get('/sistema', exigirAutenticacao, (req, res) => {
   res.redirect('/index-sistema');
 });

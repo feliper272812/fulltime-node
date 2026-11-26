@@ -1,0 +1,697 @@
+<!-- =========================================================
+  ARQUIVO: webRTCvideoChat.ejs
+  CHAMADA DE VÍDEO PONTO A PONTO (P2P) E SALA EM GRUPO VIA WEBRTC
+
+  Tecnologias:
+  - HTML5
+  - CSS3
+  - Bootstrap 5.3
+  - JavaScript ES6 (WebRTC Multi-Peer + BroadcastChannel)
+
+  Autor: Felipe Rodrigues - FullTime Technology
+========================================================= -->
+
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VideoChat P2P - FullTime Technology</title>
+
+  <!-- <script id="color-modes-local" src="./js/color-modes.js"></script> -->
+
+  <script>
+    const carregarFallbackTema = () => {
+      alert('color-modes.js local não carregou. Usando CDN oficial do Bootstrap 5.3 como reserva.');
+      console.warn('color-modes.js local não carregou. Usando CDN oficial do Bootstrap 5.3 como reserva.');
+
+      const cdnScript = document.createElement('script');
+      cdnScript.src = 'https://jsdelivr.net';
+      document.head.appendChild(cdnScript);
+    };
+  </script>
+
+  <script src="/js/color-modes.js" onerror="carregarFallbackTema()"></script>
+
+  <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet">
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      let cssCarregado = false;
+      for (let i = 0; i < document.styleSheets.length; i++) {
+        try {
+          let sheet = document.styleSheets[i];
+          if (sheet.href && sheet.href.indexOf("bootstrap.min.css") !== -1 && sheet.cssRules && sheet.cssRules.length > 0) {
+            cssCarregado = true;
+            break;
+          }
+        } catch (e) {}
+      }
+      if (!cssCarregado) {
+        let cdn = document.createElement("link");
+        cdn.rel = "stylesheet";
+        cdn.href = "https://jsdelivr.net";
+        cdn.integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH";
+        cdn.crossOrigin = "anonymous";
+        document.head.appendChild(cdn);
+      }
+    });
+  </script>
+
+  <style>
+    html, body {
+      height: 100vh !important;
+      margin: 0;
+      overflow: hidden !important;
+    }
+    body {
+      background-color: #f5f7fb;
+      display: flex;
+      flex-direction: column;
+      padding-top: 50px;
+    }
+    [data-bs-theme="dark"] body {
+      background-color: #121212;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 92px) !important;
+      overflow: hidden !important;
+    }
+    .chat-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-bottom: 6px !important;
+    }
+    .videos-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .video-wrapper {
+      position: relative;
+      background-color: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #198754;
+      width: 100%;
+      height: 100%;
+      min-height: 180px;
+    }
+    .video-wrapper video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .video-label {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    #localVideo {
+      transform: scaleX(-1);
+    }
+  </style>
+</head>
+<body>
+
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+<!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+  <header>
+    <div id="nav-sistema-placeholder"><%- include('partials/nav-sistema') %></div>
+  </header>
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+  <main class="container-fluid px-0 pt-2 chat-container">
+    <div class="card border-0 shadow-sm h-100 d-flex flex-column">
+      <div class="card-header bg-success text-white position-relative d-flex justify-content-center align-items-center py-2">
+        <h4 id="tituloSala" class="h5 mb-0 text-center">📹 VideoChat P2P &amp; Sala em Grupo</h4>
+        <span id="statusConexao" class="badge bg-light text-dark position-absolute end-0 me-3">Aguardando Câmera...</span>
+      </div>
+
+      <!-- Barra de Controles de Mídia e Simulação -->
+      <div class="bg-body-tertiary p-2 border-bottom d-flex flex-wrap gap-2 align-items-center">
+        <button id="btnIniciarCamera" class="btn btn-sm btn-primary fw-bold" onclick="iniciarCamera()">🎥 1. Ligar Câmera e Microfone</button>
+        <button id="btnMutarAudio" class="btn btn-sm btn-outline-secondary" onclick="alternarAudio()" disabled>🎤 Áudio: Ativo</button>
+        <button id="btnPausarVideo" class="btn btn-sm btn-outline-secondary" onclick="alternarVideo()" disabled>📷 Vídeo: Ativo</button>
+        <button id="btnNovaAba" class="btn btn-sm btn-outline-success fw-semibold" onclick="abrirAbaCliente()">🪟 Abrir Aba Cliente (Simular)</button>
+        <span id="contadorSala" class="badge text-bg-secondary">Participantes: 1 (Você)</span>
+        <button id="btnDesligar" class="btn btn-sm btn-danger ms-auto fw-bold" onclick="encerrarChamada()" disabled>❌ Encerrar Tudo</button>
+      </div>
+
+      <!-- Área Principal -->
+      <div class="card-body chat-body p-2">
+        <!-- Grade Dinâmica de Vídeos (P2P 1x1 ou Grupo) -->
+        <div id="videosGrid" class="videos-grid">
+          <div class="video-wrapper shadow-sm" id="wrapLocal">
+            <video id="localVideo" autoplay playsinline muted></video>
+            <span class="video-label" id="lblLocal">👤 Você (Local)</span>
+          </div>
+          <div class="video-wrapper shadow-sm" id="wrapPlaceholder">
+            <video id="remoteVideoPlaceholder" autoplay playsinline></video>
+            <span class="video-label">🌐 Aguardando interlocutor ou grupo...</span>
+          </div>
+        </div>
+
+        <!-- Painel de Sinalização P2P / Sala (Troca de Chaves SDP sem Servidor) -->
+        <div class="card border-success mt-2 flex-shrink-0">
+          <div class="card-header bg-success-subtle text-success-emphasis fw-bold py-1 px-3 d-flex justify-content-between align-items-center small">
+            <span>🔗 Conexão Direta (1x1 ou Adicionar Participante à Sala)</span>
+            <span id="badgeIpLocal" class="badge bg-secondary">IP LAN: Aguardando câmera...</span>
+          </div>
+
+          <div class="card-body py-2 px-3">
+            <div class="row g-2">
+              <!-- Lado A: Criar Convite (Anfitrião) -->
+              <div class="col-md-6 border-end">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <h6 class="small fw-bold text-primary mb-0">Passo A: Iniciar / Convidar para Sala</h6>
+                  <span class="text-body-secondary" style="font-size: 0.72rem;">Automático em abas locais</span>
+                </div>
+                <div class="input-group input-group-sm">
+                  <button id="btnCriarOferta" class="btn btn-success text-nowrap" onclick="criarOferta()" disabled>📤 Gerar Convite</button>
+                  <input type="text" id="txtOferta" class="form-control font-monospace" placeholder="Código do convite (clique novamente para +1 pessoa)..." readonly>
+                  <button class="btn btn-outline-success text-nowrap" onclick="copiarTexto('txtOferta')">📋 Copiar</button>
+                </div>
+              </div>
+
+              <!-- Lado B: Conectar / Responder (Cliente ou Anfitrião recebendo Resposta) -->
+              <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <h6 class="small fw-bold text-success mb-0">Passo B: Entrar na Sala / Concluir Conexão</h6>
+                  <span class="text-body-secondary" style="font-size: 0.72rem;">Cole convite ou resposta</span>
+                </div>
+                <div class="input-group input-group-sm">
+                  <button id="btnProcessarSinal" class="btn btn-primary text-nowrap" onclick="processarSinalRemoto()" disabled>⚡ Conectar / Responder</button>
+                  <input type="text" id="txtResposta" class="form-control font-monospace" placeholder="Cole aqui o código recebido...">
+                  <button class="btn btn-outline-primary text-nowrap" onclick="copiarTexto('txtResposta')">📋 Copiar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"><%- include('partials/footer') %></div>
+  <script>
+    let localStream = null;
+    const peers = new Map(); // peerId -> { pc, stream, wrapper, videoEl, label }
+    let pendingOfferPeerId = null;
+    let peerCounter = 0;
+
+    const myId = 'tab-' + Math.random().toString(36).slice(2, 8);
+    const params = new URLSearchParams(window.location.search);
+    const isClientTab = params.get('modo') === 'cliente';
+    const simChannel = new BroadcastChannel('webrtc-videochat-sala');
+
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:://google.com' },
+        { urls: 'stun:://google.com' }
+      ]
+    };
+
+    function abrirAbaCliente() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('modo', 'cliente');
+      window.open(url.toString(), '_blank');
+    }
+
+    function criarStreamSimuladoCliente(nome) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 360;
+      const ctx = canvas.getContext('2d');
+      let tick = 0;
+
+      const desenhar = () => {
+        tick++;
+        ctx.fillStyle = '#0f1620';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#198754';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
+
+        ctx.fillStyle = '#e6ebf0';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(nome, canvas.width / 2, canvas.height / 2 - 12);
+
+        ctx.fillStyle = '#6ea8fe';
+        ctx.font = '16px monospace';
+        const seg = Math.floor(tick / 15);
+        ctx.fillText('Cliente Simulado Ativo • ' + seg + 's', canvas.width / 2, canvas.height / 2 + 22);
+      };
+      desenhar();
+      setInterval(desenhar, 66);
+      return canvas.captureStream(15);
+    }
+
+    // 1. Liga a webcam (com fallback automático se não houver microfone ou se a webcam estiver em uso na outra aba)
+    async function iniciarCamera(silencioso = false) {
+      if (localStream) return true;
+      let temAudio = true;
+      let usandoSimulado = false;
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      } catch (err) {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          temAudio = false;
+        } catch (errVideo) {
+          temAudio = false;
+          usandoSimulado = true;
+          const rotulo = isClientTab ? 'Cliente (Aba Simulada)' : 'Participante (Sem Webcam)';
+          localStream = criarStreamSimuladoCliente(rotulo);
+          if (!silencioso) {
+            console.warn('Webcam indisponível ou em uso por outra aba. Usando stream simulado:', errVideo.message);
+          }
+        }
+      }
+
+      const localVideo = document.getElementById('localVideo');
+      localVideo.srcObject = localStream;
+      if (usandoSimulado) localVideo.style.transform = 'none';
+
+      const btnAudio = document.getElementById('btnMutarAudio');
+      if (temAudio && localStream.getAudioTracks().length > 0) {
+        btnAudio.disabled = false;
+        btnAudio.textContent = '🎤 Áudio: Ativo';
+        atualizarStatus('Câmera e Áudio Ativos - Pronto para Conectar', 'bg-warning text-dark');
+      } else {
+        btnAudio.disabled = true;
+        btnAudio.textContent = usandoSimulado ? '🖥️ Modo Simulado' : '🔇 Sem Microfone';
+        atualizarStatus(
+          usandoSimulado ? 'Cliente Simulado Ativo - Pronto para Conectar' : 'Webcam Ativa (Apenas Vídeo) - Pronto para Conectar',
+          'bg-warning text-dark'
+        );
+      }
+
+      document.getElementById('btnIniciarCamera').disabled = true;
+      document.getElementById('btnPausarVideo').disabled = false;
+      document.getElementById('btnCriarOferta').disabled = false;
+      document.getElementById('btnProcessarSinal').disabled = false;
+
+      exibirIPLocalLAN();
+      return true;
+    }
+
+    function exibirIPLocalLAN() {
+      const badgeIp = document.getElementById('badgeIpLocal');
+      if (!badgeIp) return;
+
+      badgeIp.textContent = '🌐 Verificando Rede LAN...';
+      badgeIp.className = 'badge bg-info text-dark';
+
+      const pcTemp = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:://google.com' }]
+      });
+      pcTemp.createDataChannel('');
+      pcTemp.createOffer().then(offer => pcTemp.setLocalDescription(offer));
+
+      let redeDetectada = false;
+
+      pcTemp.onicecandidate = event => {
+        if (!event || !event.candidate || redeDetectada) return;
+        const candidato = event.candidate.candidate;
+
+        const regexIP = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+        const matchIP = regexIP.exec(candidato);
+
+        if (matchIP && matchIP) {
+          const ip = matchIP;
+          const isPrivado = ip.startsWith('10.') ||
+                            ip.startsWith('192.168.') ||
+                            /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip);
+
+          if (isPrivado) {
+            redeDetectada = true;
+            badgeIp.textContent = `🌐 IP LAN: ${ip}`;
+            badgeIp.className = 'badge bg-success text-white';
+            pcTemp.close();
+            return;
+          }
+        }
+
+        const regexMDNS = /([a-zA-Z0-9-]+\.local)/;
+        const matchMDNS = regexMDNS.exec(candidato);
+
+        if (matchMDNS && matchMDNS) {
+          redeDetectada = true;
+          badgeIp.textContent = `🌐 Rede LAN Ativa (${matchMDNS})`;
+          badgeIp.className = 'badge bg-success text-white';
+          pcTemp.close();
+        }
+      };
+
+      setTimeout(() => {
+        if (!redeDetectada) {
+          badgeIp.textContent = '🌐 Rede P2P Pronta';
+          badgeIp.className = 'badge bg-success text-white';
+          pcTemp.close();
+        }
+      }, 2500);
+    }
+
+    function atualizarContadorSala() {
+      const total = 1 + peers.size;
+      const el = document.getElementById('contadorSala');
+      if (el) {
+        el.textContent = total === 1
+          ? 'Participantes: 1 (Você)'
+          : `Participantes na Sala: ${total}`;
+        el.className = total > 1 ? 'badge text-bg-success' : 'badge text-bg-secondary';
+      }
+      const placeholder = document.getElementById('wrapPlaceholder');
+      if (placeholder) {
+        placeholder.hidden = peers.size > 0;
+      }
+    }
+
+    function removerPeer(peerId) {
+      const entry = peers.get(peerId);
+      if (!entry) return;
+      try { entry.pc.close(); } catch (e) {}
+      if (entry.wrapper) entry.wrapper.remove();
+      peers.delete(peerId);
+      atualizarContadorSala();
+      if (peers.size === 0) {
+        document.getElementById('btnDesligar').disabled = true;
+        atualizarStatus('🟡 Sala vazia - Aguardando participantes', 'bg-warning text-dark');
+      }
+    }
+
+    // 2. Cria uma nova conexão RTCPeerConnection dedicada para cada participante (1x1 ou Grupo)
+    function criarPeerConnection(peerId, rotuloCustom = null) {
+      if (peers.has(peerId)) removerPeer(peerId);
+
+      peerCounter++;
+      const nomeExibicao = rotuloCustom || `Interlocutor #${peerCounter}`;
+      const pc = new RTCPeerConnection(rtcConfig);
+      const remoteStream = new MediaStream();
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'video-wrapper shadow-sm';
+      wrapper.id = 'wrap-' + peerId;
+
+      const videoEl = document.createElement('video');
+      videoEl.autoplay = true;
+      videoEl.playsInline = true;
+      videoEl.srcObject = remoteStream;
+
+      const label = document.createElement('span');
+      label.className = 'video-label';
+      label.textContent = `🌐 ${nomeExibicao}`;
+
+      wrapper.append(videoEl, label);
+      document.getElementById('videosGrid').appendChild(wrapper);
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          pc.addTrack(track, localStream);
+        });
+      }
+
+      pc.ontrack = event => {
+        if (event.streams && event.streams) {
+          event.streams.getTracks().forEach(track => {
+            if (!remoteStream.getTracks().includes(track)) {
+              remoteStream.addTrack(track);
+            }
+          });
+        } else if (event.track) {
+          remoteStream.addTrack(event.track);
+        }
+        videoEl.play().catch(() => {});
+      };
+
+      pc.onconnectionstatechange = () => {
+        const estado = pc.connectionState;
+        if (estado === 'connected') {
+          atualizarStatus(`🟢 Conectado (${peers.size} remoto${peers.size > 1 ? 's' : ''})`, 'bg-success text-white');
+          document.getElementById('btnDesligar').disabled = false;
+        } else if (estado === 'disconnected' || estado === 'failed' || estado === 'closed') {
+          removerPeer(peerId);
+        }
+      };
+
+      peers.set(peerId, { pc, stream: remoteStream, wrapper, videoEl, label });
+      atualizarContadorSala();
+      return pc;
+    }
+    // 3. Passo A: Gera uma Oferta (para 1x1 ou para adicionar mais um membro à sala)
+    async function criarOferta() {
+      if (!localStream) await iniciarCamera();
+
+      const peerId = 'peer-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+      pendingOfferPeerId = peerId;
+
+      const pc = criarPeerConnection(peerId, `Convidado #${peerCounter + 1}`);
+      atualizarStatus('Gerando código de convite...', 'bg-info text-dark');
+
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      });
+      await pc.setLocalDescription(offer);
+
+      await aguardarColetaICE(pc);
+
+      const sdpString = JSON.stringify(pc.localDescription);
+      document.getElementById('txtOferta').value = sdpString;
+      atualizarStatus('Convite Gerado! Aguardando conexão...', 'bg-primary text-white');
+
+      // Envia automaticamente para qualquer aba cliente aberta na mesma máquina
+      simChannel.postMessage({
+        tipo: 'oferta-sala',
+        origemId: myId,
+        peerId: peerId,
+        sdp: sdpString
+      });
+    }
+
+    // 4. Passo B: Processa a Oferta ou Resposta (modo manual via firewall / navegadores distintos)
+    async function processarSinalRemoto() {
+      const texto = document.getElementById('txtResposta').value.trim();
+      if (!texto) {
+        alert('Cole o código recebido no campo de texto antes de clicar em Conectar.');
+        return;
+      }
+
+      try {
+        if (!localStream) await iniciarCamera();
+        const sinal = JSON.parse(texto);
+
+        if (sinal.type === 'offer') {
+          const hostPeerId = 'host-' + Date.now();
+          const pc = criarPeerConnection(hostPeerId, 'Anfitrião da Sala');
+
+          await pc.setRemoteDescription(new RTCSessionDescription(sinal));
+          atualizarStatus('Gerando código de resposta...', 'bg-info text-dark');
+
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await aguardarColetaICE(pc);
+
+          document.getElementById('txtResposta').value = JSON.stringify(pc.localDescription);
+          atualizarStatus('Resposta Gerada! Copie e devolva ao Anfitrião.', 'bg-primary text-white');
+          alert('Resposta gerada! Copie o novo código da caixa e devolva ao Anfitrião para concluir.');
+        } else if (sinal.type === 'answer') {
+          const entry = pendingOfferPeerId ? peers.get(pendingOfferPeerId) : [...peers.values()].pop();
+          if (!entry) {
+            alert('Gere um convite no Passo A antes de colar uma resposta.');
+            return;
+          }
+          await entry.pc.setRemoteDescription(new RTCSessionDescription(sinal));
+          pendingOfferPeerId = null;
+          document.getElementById('txtResposta').value = '';
+          atualizarStatus('Conectando participante...', 'bg-warning text-dark');
+        }
+      } catch (err) {
+        alert('Código inválido ou erro ao processar sinal: ' + err.message);
+      }
+    }
+
+    // Escuta automática entre abas (Simulação Cliente <-> Anfitrião)
+    simChannel.onmessage = async ({ data }) => {
+      if (!data || data.origemId === myId) return;
+
+      // Aba Cliente recebe a oferta automaticamente
+      if (data.tipo === 'oferta-sala' && (isClientTab || peers.size === 0 && !pendingOfferPeerId)) {
+        try {
+          await iniciarCamera(true);
+          const sinal = JSON.parse(data.sdp);
+          const pc = criarPeerConnection(data.origemId, 'Anfitrião (Aba Principal)');
+
+          await pc.setRemoteDescription(new RTCSessionDescription(sinal));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await aguardarColetaICE(pc);
+
+          const answerString = JSON.stringify(pc.localDescription);
+          document.getElementById('txtResposta').value = answerString;
+
+          simChannel.postMessage({
+            tipo: 'resposta-sala',
+            origemId: myId,
+            destinoId: data.origemId,
+            peerId: data.peerId,
+            sdp: answerString
+          });
+        } catch (e) {
+          console.error('Erro na conexão automática do cliente:', e);
+        }
+      }
+
+      // Aba Anfitriã recebe a resposta automática da Aba Cliente
+      if (data.tipo === 'resposta-sala' && data.destinoId === myId) {
+        const entry = peers.get(data.peerId);
+        if (entry && entry.pc.signalingState !== 'stable') {
+          try {
+            await entry.pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(data.sdp)));
+            if (pendingOfferPeerId === data.peerId) pendingOfferPeerId = null;
+          } catch (e) {
+            console.error('Erro ao aplicar resposta automática:', e);
+          }
+        }
+      }
+
+      // Aba Cliente recém-aberta pede convite ao Anfitrião se já houver sala ativa
+      if (data.tipo === 'cliente-pronto' && !isClientTab && localStream) {
+        criarOferta();
+      }
+    };
+
+    function aguardarColetaICE(pc) {
+      return new Promise(resolve => {
+        if (pc.iceGatheringState === 'complete') {
+          resolve();
+        } else {
+          const checkState = () => {
+            if (pc.iceGatheringState === 'complete') {
+              pc.removeEventListener('icegatheringstatechange', checkState);
+              resolve();
+            }
+          };
+          pc.addEventListener('icegatheringstatechange', checkState);
+          setTimeout(resolve, 2500);
+        }
+      });
+    }
+
+    function alternarAudio() {
+      if (!localStream) return;
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        const btn = document.getElementById('btnMutarAudio');
+        btn.textContent = audioTrack.enabled ? '🎤 Áudio: Ativo' : '🔇 Áudio: Mudo';
+        btn.className = audioTrack.enabled ? 'btn btn-sm btn-outline-secondary' : 'btn btn-sm btn-danger';
+      }
+    }
+
+    function alternarVideo() {
+      if (!localStream) return;
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        const btn = document.getElementById('btnPausarVideo');
+        btn.textContent = videoTrack.enabled ? '📷 Vídeo: Ativo' : '🚫 Vídeo: Pausado';
+        btn.className = videoTrack.enabled ? 'btn btn-sm btn-outline-secondary' : 'btn btn-sm btn-warning';
+      }
+    }
+
+    function encerrarChamada() {
+      for (const peerId of [...peers.keys()]) {
+        removerPeer(peerId);
+      }
+      pendingOfferPeerId = null;
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      document.getElementById('localVideo').srcObject = null;
+      document.getElementById('txtOferta').value = '';
+      document.getElementById('txtResposta').value = '';
+
+      const badgeIp = document.getElementById('badgeIpLocal');
+      if (badgeIp) {
+        badgeIp.textContent = 'IP LAN: Aguardando câmera...';
+        badgeIp.className = 'badge bg-secondary';
+      }
+
+      const btnAudio = document.getElementById('btnMutarAudio');
+      btnAudio.disabled = true;
+      btnAudio.textContent = '🎤 Áudio: Ativo';
+      btnAudio.className = 'btn btn-sm btn-outline-secondary';
+
+      document.getElementById('btnIniciarCamera').disabled = false;
+      document.getElementById('btnPausarVideo').disabled = true;
+      document.getElementById('btnCriarOferta').disabled = true;
+      document.getElementById('btnProcessarSinal').disabled = true;
+      document.getElementById('btnDesligar').disabled = true;
+
+      atualizarContadorSala();
+      atualizarStatus('Chamada Encerrada', 'bg-secondary text-white');
+    }
+
+    function atualizarStatus(texto, classeBadge) {
+      const badge = document.getElementById('statusConexao');
+      badge.textContent = texto;
+      badge.className = `badge position-absolute end-0 me-3 ${classeBadge}`;
+    }
+
+    function copiarTexto(idElemento) {
+      const el = document.getElementById(idElemento);
+      if (!el || !el.value) {
+        alert('Nada para copiar ainda.');
+        return;
+      }
+      navigator.clipboard.writeText(el.value);
+      alert('Código copiado para a área de transferência!');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (isClientTab) {
+        document.title = 'VideoChat Cliente - FullTime Technology';
+        document.getElementById('tituloSala').textContent = '📹 VideoChat P2P (Modo Cliente / Interlocutor)';
+        document.getElementById('lblLocal').textContent = '👤 Você (Cliente Simulado)';
+        document.getElementById('btnNovaAba').hidden = true;
+        await iniciarCamera(true);
+        simChannel.postMessage({ tipo: 'cliente-pronto', origemId: myId });
+      }
+    });
+  </script>
+
+  <!-- DEPENDÊNCIAS DE SCRIPTS DO ECOSSISTEMA CORE -->
+  <script src="/js/bootstrap.bundle.min.js"></script>
+  <script>
+    if (typeof bootstrap === 'undefined') {
+      alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+      console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+      document.write('<script src="https://jsdelivr.net" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"><\/script>');
+    }
+  </script>
+
+</body>
+</html>

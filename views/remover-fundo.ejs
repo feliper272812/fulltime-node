@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+
+<!-- =========================================================
+ARQUIVO: remover-fundo.ejs
+
+MÓDULO NATIVO DE REMOÇÃO DE FUNDO COM INTELIGÊNCIA ARTIFICIAL
+(SUPORTE A PNG ESTÁTICO E GIF ANIMADO EM ALTA VELOCIDADE)
+
+  Tecnologias:
+  - HTML5
+  - CSS3
+  - Bootstrap 5.3
+  - @imgly/background-removal 1.7.0 + gifuct-js + gifenc
+
+  Tema:
+  - Light / Dark / Auto
+
+  Autor: Felipe Rodrigues - FullTime Technology
+========================================================= -->
+
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FullTime Technology - Remover Fundo</title>
+
+    <!-- FALLBACKS (definidos ANTES de serem usados pelos onerror abaixo) -->
+    <script>
+      const carregarFallbackTema = () => {
+        alert('color-modes.js local não carregou. Usando CDN oficial do Bootstrap 5.3 como reserva.');
+        console.warn('color-modes.js local não carregou. Usando CDN oficial do Bootstrap 5.3 como reserva.');
+
+        const cdnScript = document.createElement('script');
+        cdnScript.src = 'https://getbootstrap.com/docs/5.3/assets/js/color-modes.js';
+        document.head.appendChild(cdnScript);
+      };
+
+      const carregarFallbackCss = (link) => {
+        link.onerror = null;
+        alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+        console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+
+        link.integrity = 'sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH';
+        link.crossOrigin = 'anonymous';
+        link.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+      };
+    </script>
+
+    <!-- SCRIPT OFICIAL DE TEMAS BOOTSTRAP 5.3 -->
+    <script src="/js/color-modes.js" onerror="carregarFallbackTema()"></script>
+
+    <!-- BOOTSTRAP 5.3.3 CSS LOCAL -->
+    <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet" onerror="carregarFallbackCss(this)">
+
+    <style>
+        :root {
+            --gap-vertical: 2px;
+            --nav-h: 58px;
+            --footer-h: 38px;
+        }
+
+        html, body {
+            height: 100% !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            padding: var(--nav-h) 0 var(--footer-h) 0 !important;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease;
+        }
+
+        [data-bs-theme="dark"] body {
+            background-color: #121212;
+        }
+
+        .main-wrapper {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: var(--gap-vertical) 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-custom {
+            border-radius: 0;
+            box-shadow: 0 0 25px rgba(0,0,0,0.15);
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        [data-bs-theme="dark"] .card-custom {
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
+        }
+
+        .card-custom .card-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .preview-row {
+            flex: 1;
+            min-height: 220px;
+        }
+
+        .preview-box {
+            width: 100%;
+            height: 100%;
+            min-height: 250px;
+            border: 2px dashed #198754;
+            border-radius: 12px;
+            background-color: var(--bs-tertiary-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Fundo quadriculado simulando transparência (Tema Claro) */
+        .fundo-transparente {
+            background-color: #ffffff;
+            background-image: linear-gradient(45deg, #e9ecef 25%, transparent 25%),
+                              linear-gradient(-45deg, #e9ecef 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #e9ecef 75%),
+                              linear-gradient(-45deg, transparent 75%, #e9ecef 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        /* Fundo quadriculado simulando transparência (Tema Escuro) */
+        [data-bs-theme="dark"] .fundo-transparente {
+            background-color: #333;
+            background-image: linear-gradient(45deg, #444 25%, transparent 25%),
+                              linear-gradient(-45deg, #444 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #444 75%),
+                              linear-gradient(-45deg, transparent 75%, #444 75%);
+        }
+
+        /* Botão azul (primary) para o input de arquivo */
+        #inputImagemOriginal::file-selector-button {
+            background-color: var(--bs-primary);
+            color: #fff;
+            border-color: var(--bs-primary);
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        #inputImagemOriginal:hover::file-selector-button {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+
+        .preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; z-index: 2; }
+
+        .spinner-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 5; color: #fff;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+<!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+    <div id="nav-sistema-placeholder"><%- include('partials/nav-sistema') %></div>
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+    <main class="main-wrapper">
+        <div class="card card-custom bg-body text-body border-0">
+            <div class="card-header bg-success text-white text-center py-2">
+                <h4 class="mb-0">🔮 Processador de Imagem - Fundo Transparente</h4>
+            </div>
+            <div class="card-body p-3">
+
+                <!-- SELEÇÃO DE ARQUIVO -->
+                <div class="mb-3 text-center">
+                    <label for="inputImagemOriginal" class="form-label fw-bold mb-1">Selecione a imagem do produto para processamento</label>
+                    <input type="file" id="inputImagemOriginal" accept="image/*" class="form-control">
+                    <small class="text-body-secondary d-block mt-1">O processamento é feito localmente no seu computador por IA (aceita PNG, JPG, WebP e GIF animado).</small>
+                    <div class="form-check form-switch d-inline-block mt-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="chkRealceEscuros" checked>
+                        <label class="form-check-label small" for="chkRealceEscuros">Preservar áreas escuras (recomendado para objetos sobre fundo preto)</label>
+                    </div>
+                </div>
+
+                <!-- PREVIEWS COMPARATIVOS -->
+                <div class="row g-3 preview-row">
+                    <div class="col-md-6 d-flex flex-column">
+                        <h6 class="text-center text-success fw-bold mb-2">Original</h6>
+                        <div class="preview-box flex-grow-1" id="boxOriginal">
+                            <span class="text-body-secondary" id="txtPlaceholderOrig">Aguardando arquivo...</span>
+                            <img id="imgOriginalTag" class="d-none" alt="Original">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 d-flex flex-column">
+                        <h6 class="text-center text-success fw-bold mb-2">Resultado (PNG / GIF Transparente)</h6>
+                        <div class="preview-box fundo-transparente flex-grow-1" id="boxResultado">
+                            <span class="text-body-secondary" id="txtPlaceholderRest">Aguardando processamento...</span>
+                            <img id="imgResultadoTag" class="d-none" alt="Sem Fundo">
+
+                            <div id="loadingOverlay" class="spinner-overlay d-none">
+                                <div class="spinner-border text-success mb-2" role="status"></div>
+                                <span class="fw-semibold">IA removendo o fundo...</span>
+                                <small class="text-light px-3 text-center" id="txtProgresso">Iniciando...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BARRA DE AÇÕES -->
+                <div class="mt-3 text-end d-none" id="barraAcoesResultado">
+                    <button type="button" class="btn btn-outline-secondary me-2" id="btnLimpar">🧹 Limpar</button>
+                    <button type="button" class="btn btn-success fw-bold" id="btnDownloadPng">💾 Download PNG</button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- RODAPÉ FIXO (FOOTER) -->
+    <div id="footer-placeholder"><%- include('partials/footer') %></div>
+
+    <!-- DEPENDÊNCIAS DE SCRIPTS DO ECOSSISTEMA CORE -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        if (typeof bootstrap === 'undefined') {
+            alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"><\/script>');
+        }
+    </script>
+
+    <!-- AJUSTE DO ESPAÇO DA NAV E DO RODAPÉ -->
+    <script>
+        (function () {
+            const raiz = document.documentElement.style;
+
+            function medirLayout() {
+                const nav = document.querySelector('#nav-sistema-placeholder nav, #nav-sistema-placeholder .navbar');
+                const rodape = document.querySelector('#footer-placeholder footer, #footer-placeholder > *');
+
+                if (nav) {
+                    const fixo = getComputedStyle(nav).position === 'fixed';
+                    raiz.setProperty('--nav-h', fixo ? Math.ceil(nav.getBoundingClientRect().bottom) + 'px' : '0px');
+                }
+                if (rodape) {
+                    const fixo = getComputedStyle(rodape).position === 'fixed';
+                    raiz.setProperty('--footer-h', fixo ? Math.ceil(window.innerHeight - rodape.getBoundingClientRect().top) + 'px' : '0px');
+                }
+            }
+
+            let agendado = false;
+            function agendarMedicao() {
+                if (agendado) return;
+                agendado = true;
+                requestAnimationFrame(() => { agendado = false; medirLayout(); });
+            }
+
+            ['nav-sistema-placeholder', 'footer-placeholder'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) new MutationObserver(agendarMedicao).observe(el, { childList: true, subtree: true });
+            });
+
+            window.addEventListener('resize', agendarMedicao);
+            window.addEventListener('load', agendarMedicao);
+
+            document.addEventListener('DOMContentLoaded', () => {
+                agendarMedicao();
+            });
+        })();
+    </script>
+
+    <!-- MOTOR DE IA TURBO (SUPORTE A PNG ESTÁTICO E GIF ANIMADO) -->
+    <script type="module">
+        const URL_IA     = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm";
+        const URL_GIFUCT = "https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/+esm";
+        const URL_GIFENC = "https://cdn.jsdelivr.net/npm/gifenc@1.0.3/+esm";
+
+        const MAX_LADO_GIF = 420;
+        let dispositivoAtual = (typeof navigator !== "undefined" && "gpu" in navigator) ? "gpu" : "cpu";
+
+        // Modelo ideal para cada motor: "medium" (fp16) é o que roda bem no WebGPU;
+        // "small" (quantizado uint8) é bom na CPU, mas na GPU pode ficar extremamente lento.
+        const MODELO_POR_DISPOSITIVO = { gpu: "medium", cpu: "small" };
+
+        const inputArquivo       = document.getElementById("inputImagemOriginal");
+        const imgOriginalTag     = document.getElementById("imgOriginalTag");
+        const txtPlaceholderOrig = document.getElementById("txtPlaceholderOrig");
+        const imgResultadoTag    = document.getElementById("imgResultadoTag");
+        const txtPlaceholderRest = document.getElementById("txtPlaceholderRest");
+        const loadingOverlay     = document.getElementById("loadingOverlay");
+        const txtProgresso       = document.getElementById("txtProgresso");
+        const barraAcoes         = document.getElementById("barraAcoesResultado");
+        const btnDownload        = document.getElementById("btnDownloadPng");
+        const btnLimpar          = document.getElementById("btnLimpar");
+
+        let urlOriginal = null;
+        let urlResultado = null;
+        let tokenAtual = 0;
+        let ticker = null;
+
+        // ---------------------------------------------------------------
+        // PROGRESSO
+        // A biblioteca guarda (memoize) a configuração da PRIMEIRA chamada, inclusive o callback
+        // de progresso. Por isso o callback é único e lê este estado, em vez de depender de
+        // variáveis locais de cada quadro (antes, ele sobrescrevia o texto "Quadro X de N").
+        // ---------------------------------------------------------------
+        const progresso = { fase: "init", detalhe: "Carregando motor de IA...", pct: null, quadro: 0, total: 0, inicio: 0, duracoes: [] };
+
+        const NOMES_RECURSO = (chave) =>
+            chave.includes("/models/") ? "modelo de IA" :
+            chave.endsWith(".wasm")    ? "motor WASM"   :
+            chave.endsWith(".mjs")     ? "motor JS"     : chave;
+
+        const NOMES_ETAPA = {
+            "compute:decode":    "lendo imagem",
+            "compute:inference": "inferência da IA",
+            "compute:mask":      "aplicando máscara",
+            "compute:encode":    "gerando saída"
+        };
+
+        function formatarTempo(seg) {
+            return seg >= 60 ? `${Math.floor(seg / 60)} min ${seg % 60} s` : `${seg} s`;
+        }
+
+        function renderProgresso() {
+            const modo = dispositivoAtual.toUpperCase();
+            let txt;
+
+            if (progresso.fase === "fetch") {
+                txt = `Baixando ${progresso.detalhe} (${modo}): ${progresso.pct}% — só na 1ª vez`;
+            } else if (progresso.fase === "compute") {
+                const decorrido = Math.floor((Date.now() - progresso.inicio) / 1000);
+                txt = progresso.total > 1
+                    ? `[${modo}] Quadro ${progresso.quadro} de ${progresso.total} — ${progresso.detalhe} · ${formatarTempo(decorrido)}`
+                    : `Processando (${modo}) — ${progresso.detalhe} · ${formatarTempo(decorrido)}`;
+
+                const d = progresso.duracoes.slice(-5);
+                if (progresso.total > 1 && d.length) {
+                    const media = d.reduce((a, b) => a + b, 0) / d.length;
+                    txt += ` · restam ~${formatarTempo(Math.round(media * (progresso.total - progresso.quadro) / 1000))}`;
+                }
+            } else {
+                txt = progresso.detalhe;
+            }
+            txtProgresso.textContent = txt;
+        }
+
+        function definirStatus(texto) {
+            progresso.fase = "init";
+            progresso.detalhe = texto;
+            renderProgresso();
+        }
+
+        function aoProgredir(chave, atual, total) {
+            if (chave.startsWith("fetch:")) {
+                progresso.fase = "fetch";
+                progresso.detalhe = NOMES_RECURSO(chave);
+                progresso.pct = total ? Math.round(atual / total * 100) : 0;
+            } else {
+                progresso.fase = "compute";
+                progresso.detalhe = NOMES_ETAPA[chave] || chave;
+            }
+            renderProgresso();
+        }
+
+        function iniciarTicker() {
+            pararTicker();
+            ticker = setInterval(renderProgresso, 1000);
+        }
+
+        function pararTicker() {
+            if (ticker) { clearInterval(ticker); ticker = null; }
+        }
+
+        function liberarUrls() {
+            if (urlOriginal)  { URL.revokeObjectURL(urlOriginal);  urlOriginal = null; }
+            if (urlResultado) { URL.revokeObjectURL(urlResultado); urlResultado = null; }
+        }
+
+        function ehGif(arquivo) {
+            return arquivo.type === "image/gif" || /\.gif$/i.test(arquivo.name);
+        }
+
+        function canvasParaBlobRapido(canvas) {
+            return new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.9));
+        }
+
+        async function executarIAResistente(removeBackground, entrada, opcoesExtra = {}) {
+            try {
+                return await removeBackground(entrada, {
+                    device: dispositivoAtual,
+                    model: MODELO_POR_DISPOSITIVO[dispositivoAtual],
+                    ...opcoesExtra,
+                    progress: aoProgredir
+                });
+            } catch (err) {
+                if (dispositivoAtual === "gpu") {
+                    console.warn("WebGPU falhou neste hardware, alternando para CPU:", err);
+                    dispositivoAtual = "cpu";
+                    definirStatus("WebGPU falhou neste hardware — alternando para CPU...");
+                    return await removeBackground(entrada, {
+                        device: "cpu",
+                        model: MODELO_POR_DISPOSITIVO.cpu,
+                        ...opcoesExtra,
+                        progress: aoProgredir
+                    });
+                }
+                throw err;
+            }
+        }
+        // ---------------------------------------------------------------
+        // PRESERVAR ÁREAS ESCURAS
+        // A IA confunde partes escuras do objeto com o fundo preto (ex.: lado escuro da Terra no
+        // espaço) e as apaga. Solução: a IA analisa uma CÓPIA com as sombras clareadas (gama), mas a
+        // máscara (alpha) resultante é aplicada sobre as cores ORIGINAIS da imagem.
+        // ---------------------------------------------------------------
+        const GAMA_REALCE = 0.5;
+        const LUT_REALCE = Uint8ClampedArray.from({ length: 256 }, (_, i) => Math.round(255 * Math.pow(i / 255, GAMA_REALCE)));
+        const chkRealce = document.getElementById("chkRealceEscuros");
+
+        function canvasParaBlobPng(canvas) {
+            return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        }
+
+        async function removerFundoRGBA(removeBackground, blobOriginal) {
+            const bmp = await createImageBitmap(blobOriginal);
+            const w = bmp.width;
+            const h = bmp.height;
+
+            const cv = document.createElement("canvas");
+            cv.width = w; cv.height = h;
+            const ctx = cv.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(bmp, 0, 0);
+            if (bmp.close) bmp.close();
+
+            const original = ctx.getImageData(0, 0, w, h);
+            const px = original.data;
+
+            let entradaIA = blobOriginal;
+            if (chkRealce.checked) {
+                const clareado = new ImageData(new Uint8ClampedArray(px), w, h);
+                const d = clareado.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    d[i]     = LUT_REALCE[d[i]];
+                    d[i + 1] = LUT_REALCE[d[i + 1]];
+                    d[i + 2] = LUT_REALCE[d[i + 2]];
+                }
+                ctx.putImageData(clareado, 0, 0);
+                entradaIA = await canvasParaBlobPng(cv);
+            }
+
+            const blobIA = await executarIAResistente(removeBackground, entradaIA, {
+                output: { format: "image/x-rgba8" }
+            });
+            const ia = new Uint8ClampedArray(await blobIA.arrayBuffer());
+            if (ia.length !== px.length) {
+                throw new Error("O tamanho da máscara da IA é diferente do da imagem original.");
+            }
+
+            // cores ORIGINAIS + transparência (alpha) calculada pela IA
+            for (let i = 3; i < px.length; i += 4) px[i] = ia[i];
+            return { data: px, w, h };
+        }
+
+        async function removerFundoPNG(removeBackground, arquivo) {
+            if (!chkRealce.checked) {
+                return await executarIAResistente(removeBackground, arquivo, {
+                    output: { format: "image/png" }
+                });
+            }
+            const { data, w, h } = await removerFundoRGBA(removeBackground, arquivo);
+            const cv = document.createElement("canvas");
+            cv.width = w; cv.height = h;
+            cv.getContext("2d").putImageData(new ImageData(data, w, h), 0, 0);
+            return await canvasParaBlobPng(cv);
+        }
+
+        async function extrairQuadrosGif(arquivo, parseGIF, decompressFrames) {
+            const gif = parseGIF(await arquivo.arrayBuffer());
+            const frames = decompressFrames(gif, true);
+            const W = gif.lsd.width;
+            const H = gif.lsd.height;
+
+            const escala = Math.min(1, MAX_LADO_GIF / Math.max(W, H));
+            const w = Math.max(1, Math.round(W * escala));
+            const h = Math.max(1, Math.round(H * escala));
+
+            const tela = document.createElement("canvas");
+            tela.width = W; tela.height = H;
+            const ctx = tela.getContext("2d", { willReadFrequently: true });
+
+            const saida = document.createElement("canvas");
+            saida.width = w; saida.height = h;
+            const ctxSaida = saida.getContext("2d");
+
+            const remendo = document.createElement("canvas");
+            const ctxRemendo = remendo.getContext("2d");
+
+            const quadros = [];
+            let dimsAnterior = null;
+            let descarteAnterior = 0;
+            let estadoRestaurar = null;
+
+            for (const f of frames) {
+                if (descarteAnterior === 2 && dimsAnterior) {
+                    ctx.clearRect(dimsAnterior.left, dimsAnterior.top, dimsAnterior.width, dimsAnterior.height);
+                } else if (descarteAnterior === 3 && estadoRestaurar) {
+                    ctx.putImageData(estadoRestaurar, 0, 0);
+                }
+                estadoRestaurar = f.disposalType === 3 ? ctx.getImageData(0, 0, W, H) : null;
+
+                remendo.width = f.dims.width;
+                remendo.height = f.dims.height;
+                ctxRemendo.putImageData(new ImageData(f.patch, f.dims.width, f.dims.height), 0, 0);
+                ctx.drawImage(remendo, f.dims.left, f.dims.top);
+
+                ctxSaida.clearRect(0, 0, w, h);
+                ctxSaida.drawImage(tela, 0, 0, w, h);
+
+                quadros.push({ blob: await canvasParaBlobRapido(saida), atraso: f.delay || 100 });
+
+                dimsAnterior = f.dims;
+                descarteAnterior = f.disposalType;
+            }
+            return { quadros, largura: w, altura: h };
+        }
+
+        async function processarGif(arquivo, token, removeBackground) {
+            definirStatus("Carregando módulos de GIF...");
+            const [{ parseGIF, decompressFrames }, { GIFEncoder, quantize, applyPalette }] = await Promise.all([
+                import(URL_GIFUCT),
+                import(URL_GIFENC)
+            ]);
+
+            definirStatus("Extraindo quadros do GIF...");
+            const { quadros, largura, altura } = await extrairQuadrosGif(arquivo, parseGIF, decompressFrames);
+
+            if (quadros.length <= 1) {
+                progresso.total = 0;
+                progresso.inicio = Date.now();
+                const blob = await removerFundoPNG(removeBackground, arquivo);
+                return { blob, ext: "png" };
+            }
+
+            const encoder = GIFEncoder();
+            progresso.total = quadros.length;
+            progresso.duracoes = [];
+
+            for (let i = 0; i < quadros.length; i++) {
+                if (token !== tokenAtual) return null;
+
+                progresso.quadro = i + 1;
+                progresso.inicio = Date.now();
+                progresso.fase = "compute";
+                progresso.detalhe = i === 0 ? "preparando IA" : "iniciando";
+                renderProgresso();
+
+                const { data } = await removerFundoRGBA(removeBackground, quadros[i].blob);
+                quadros[i].blob = null;
+
+                // o 1º quadro inclui download/criação da sessão, então não entra na estimativa
+                if (i > 0) progresso.duracoes.push(Date.now() - progresso.inicio);
+
+                const paleta = quantize(data, 256, { format: "rgba4444", oneBitAlpha: true, useSqrt: false });
+                const indices = applyPalette(data, paleta, "rgba4444");
+                const idxTransp = paleta.findIndex((c) => c.at(3) === 0);
+
+                encoder.writeFrame(indices, largura, altura, {
+                    palette: paleta,
+                    delay: quadros[i].atraso,
+                    transparent: idxTransp >= 0,
+                    transparentIndex: idxTransp >= 0 ? idxTransp : 0,
+                    dispose: 2,
+                    repeat: 0
+                });
+            }
+
+            encoder.finish();
+            return { blob: new Blob([encoder.bytes()], { type: "image/gif" }), ext: "gif" };
+        }
+
+        async function processarRemocaoFundo(arquivo) {
+            const token = ++tokenAtual;
+            liberarUrls();
+
+            urlOriginal = URL.createObjectURL(arquivo);
+            imgOriginalTag.src = urlOriginal;
+            imgOriginalTag.classList.remove("d-none");
+            txtPlaceholderOrig.classList.add("d-none");
+
+            imgResultadoTag.classList.add("d-none");
+            imgResultadoTag.removeAttribute("src");
+            txtPlaceholderRest.textContent = "Aguardando processamento...";
+            txtPlaceholderRest.classList.remove("d-none");
+            loadingOverlay.classList.remove("d-none");
+            progresso.total = 0;
+            progresso.duracoes = [];
+            definirStatus("Carregando motor de IA...");
+            iniciarTicker();
+            barraAcoes.classList.add("d-none");
+
+            try {
+                const { removeBackground } = await import(URL_IA);
+
+                let resultado;
+                if (ehGif(arquivo)) {
+                    resultado = await processarGif(arquivo, token, removeBackground);
+                } else {
+                    progresso.total = 0;
+                    progresso.inicio = Date.now();
+                    const blob = await removerFundoPNG(removeBackground, arquivo);
+                    resultado = { blob, ext: "png" };
+                }
+
+                if (!resultado || token !== tokenAtual) return;
+
+                urlResultado = URL.createObjectURL(resultado.blob);
+                imgResultadoTag.src = urlResultado;
+                imgResultadoTag.classList.remove("d-none");
+                txtPlaceholderRest.classList.add("d-none");
+
+                btnDownload.textContent = `💾 Download ${resultado.ext.toUpperCase()}`;
+                btnDownload.onclick = () => {
+                    const a = document.createElement("a");
+                    a.href = urlResultado;
+                    a.download = `fulltime_prod_${Date.now()}_sem_fundo.${resultado.ext}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+
+                barraAcoes.classList.remove("d-none");
+
+            } catch (erro) {
+                if (token !== tokenAtual) return;
+                console.error(erro);
+                alert("Falha no processamento da IA:\n" + erro.message);
+                txtPlaceholderRest.textContent = "Erro no processamento da imagem.";
+            } finally {
+                if (token === tokenAtual) { pararTicker(); loadingOverlay.classList.add("d-none"); }
+            }
+        }
+
+        function resetarPainel() {
+            tokenAtual++;
+            pararTicker();
+            liberarUrls();
+            inputArquivo.value = "";
+            imgOriginalTag.classList.add("d-none");
+            imgOriginalTag.removeAttribute("src");
+            txtPlaceholderOrig.classList.remove("d-none");
+            imgResultadoTag.classList.add("d-none");
+            imgResultadoTag.removeAttribute("src");
+            txtPlaceholderRest.textContent = "Aguardando processamento...";
+            txtPlaceholderRest.classList.remove("d-none");
+            loadingOverlay.classList.add("d-none");
+            barraAcoes.classList.add("d-none");
+        }
+
+        inputArquivo.addEventListener("change", (e) => {
+            const arquivo = e.target.files && e.target.files.item(0);
+            if (arquivo) processarRemocaoFundo(arquivo);
+        });
+
+        btnLimpar.addEventListener("click", resetarPainel);
+    </script>
+
+</body>
+</html>
