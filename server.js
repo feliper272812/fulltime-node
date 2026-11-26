@@ -76,8 +76,13 @@ const {
 const { registerNewsRoutes } = require('./news-routes');
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || '127.0.0.1';
 const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+  throw new Error(`PORT inválida: ${process.env.PORT}`);
+}
 
 // Configuração da conexão com o MySQL Portátil (usuário root, sem senha)
 const dbConfig = {
@@ -92,6 +97,7 @@ const DB_NAME = 'fulltime_db';
 // Configuração do motor de templates EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.set('trust proxy', 'loopback');
 
 // Middlewares para leitura de formulários, JSON (com suporte a Base64 grande) e arquivos estáticos
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
@@ -2264,9 +2270,9 @@ app.post('/fornecedores/:id/excluir', exigirAutenticacao, async (req, res) => {
 // Inicializa o banco e sobe o servidor Express
 inicializarBanco()
   .then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, HOST, () => {
       console.log('========================================================');
-      console.log(`  FullTime Technology rodando em: http://localhost:${PORT}`);
+      console.log(`  FullTime Technology rodando em: http://${HOST}:${PORT}`);
       console.log(`  Banco MySQL "${DB_NAME}" conectado e pronto!`);
       console.log('========================================================');
     });

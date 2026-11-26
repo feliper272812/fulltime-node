@@ -1,0 +1,4 @@
+/iniciar_ambiente.sh text eol=lf
+/parar_ambiente.sh text eol=lf
+/iniciar_ambiente.bat text eol=crlf
+/parar_ambiente.bat text eol=crlf
