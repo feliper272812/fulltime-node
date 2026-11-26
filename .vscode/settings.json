@@ -4,6 +4,9 @@
   "liveServer.settings.CustomBrowser": "chrome",
   "git.autofetch": true,
   "git.confirmSync": false,
+  "terminal.integrated.env.windows": {
+    "PATH": "D:\\dev\\nodejs;${env:PATH}"
+  },
   "files.associations": {
     "*.ejs": "html"
   },

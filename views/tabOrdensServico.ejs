@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ordens de Serviço</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .ordens-table th, .ordens-table td { white-space: nowrap; }
+        .ordens-table .action-cell { padding-right: 1.25rem !important; }
+        .btn-xs { padding: 1px 5px; font-size: .72rem; border-radius: 3px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid px-2">
+        <div class="card card-custom border-0 mt-3">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 text-center">Tabela de Ordens de Serviço</h3>
+            </div>
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-success" role="status"><%= mensagem %></div><% } %>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <a href="/os/novo" class="btn btn-sm btn-primary text-light">➕ Nova OS</a>
+                    <a href="/os/exportar.csv" class="btn btn-sm btn-success">📄 CSV</a>
+                    <span class="badge text-bg-secondary">Ordens encontradas: <strong><%= ordens.length %></strong></span>
+                    <form class="input-group input-group-sm ms-md-auto" action="/os" method="get" style="max-width:400px">
+                        <input name="q" class="form-control" type="search" placeholder="Pesquisar por número, cliente ou equipamento" value="<%= busca || '' %>" aria-label="Pesquisar ordens de serviço">
+                        <button class="btn btn-outline-success" type="submit">🔍</button>
+                    </form>
+                </div>
+
+                <% if (ordens.length === 0) { %>
+                    <div class="alert alert-info mb-0">
+                        Nenhuma ordem de serviço encontrada. <a href="/os/novo">Cadastrar agora</a>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-hover table-striped align-middle mb-0 ordens-table" style="font-size:.9rem">
+                            <thead class="table-dark text-uppercase" style="font-size:.78rem;letter-spacing:.4px">
+                                <tr>
+                                    <th>Número</th><th>Ações</th><th>Data</th><th>Cliente</th>
+                                    <th>Equipamento</th><th>Status</th><th>Prioridade</th><th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% ordens.forEach(ordem => { %>
+                                    <tr>
+                                        <td class="fw-bold text-secondary">#<%= String(ordem.id).padStart(6, '0') %></td>
+                                        <td class="text-nowrap action-cell">
+                                            <a class="btn btn-xs btn-outline-primary" href="/os/<%= ordem.id %>/editar">Editar</a>
+                                            <form class="d-inline" method="post" action="/os/<%= ordem.id %>/excluir" onsubmit="return confirm('Excluir a ordem de serviço #<%= String(ordem.id).padStart(6, '0') %>?')">
+                                                <button class="btn btn-xs btn-outline-danger" type="submit">Excluir</button>
+                                            </form>
+                                        </td>
+                                        <td><%= formatarDataBR(ordem.dataAbertura) %></td>
+                                        <td class="fw-medium"><%= ordem.cliente %></td>
+                                        <td><%= [ordem.equipamento, ordem.marca, ordem.modelo].filter(Boolean).join(' / ') || '—' %></td>
+                                        <td><span class="badge <%= ordem.status === 'Finalizada' ? 'text-bg-success' : ordem.status === 'Cancelada' ? 'text-bg-danger' : ordem.status === 'Em Andamento' ? 'text-bg-primary' : 'text-bg-secondary' %>"><%= ordem.status %></span></td>
+                                        <td><%= ordem.prioridade %></td>
+                                        <td class="text-end fw-bold text-success"><%= formatarMoeda(ordem.valorTotal) %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

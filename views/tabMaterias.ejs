@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grade de matérias - <%= edicao.titulo %></title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .coluna-jornal { min-height: 300px; }
+        .card-materia { transition: transform .15s ease-in-out, box-shadow .15s ease-in-out; }
+        .card-materia:hover { transform: translateY(-2px); box-shadow: var(--bs-box-shadow-sm) !important; }
+        .resumo-materia { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .btn-xs { padding: 1px 5px; font-size: .72rem; border-radius: 3px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid px-2">
+        <div class="card card-custom border-0 mt-3">
+            <div class="card-header bg-success text-white">
+                <h1 class="h4 mb-0 text-center">Grade de matérias — Edição nº <%= edicao.numero %></h1>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <a href="/edicoes" class="btn btn-sm btn-outline-success">📰 Edições</a>
+                    <% if (edicao.status !== 'Fechada') { %>
+                        <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias/nova" class="btn btn-sm btn-success">🆕 Cadastrar matéria</a>
+                    <% } %>
+                    <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/preview?preview=1" class="btn btn-sm btn-outline-danger" title="Abrir a edição em formato de impressão">👁️ Preview PDF</a>
+                    <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/exportar.json" class="btn btn-sm btn-outline-secondary">⬇ JSON da edição</a>
+                    <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias<%= busca ? `?q=${encodeURIComponent(busca)}` : '' %>" class="btn btn-sm btn-outline-secondary">🔄 Atualizar grade</a>
+                    <span class="badge text-bg-secondary"><%= edicao.titulo %> · <%= formatarDataBR(edicao.data) %> · <%= edicao.status %></span>
+                </div>
+
+                <% if (mensagem) { %><div class="alert alert-info" role="status"><%= mensagem %></div><% } %>
+                <% if (edicao.status === 'Fechada') { %>
+                    <div class="alert alert-warning">Esta edição está fechada e somente pode ser consultada. Reabra-a na lista de edições para alterar matérias.</div>
+                <% } %>
+
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <span class="badge text-bg-dark"><%= totalMaterias %> matéria(s) cadastrada(s)</span>
+                    <% if (busca) { %><span class="small text-body-secondary"><%= materias.length %> resultado(s) para “<%= busca %>”</span><% } %>
+                    <form class="input-group input-group-sm ms-md-auto" action="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias" method="get" style="max-width:380px">
+                        <input name="q" type="search" class="form-control" value="<%= busca %>" placeholder="Filtrar matérias na grade..." aria-label="Buscar matérias">
+                        <button class="btn btn-outline-success" type="submit">🔍</button>
+                        <% if (busca) { %><a class="btn btn-outline-secondary" href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias" title="Limpar busca">❌</a><% } %>
+                    </form>
+                </div>
+
+                <% if (!materias.length) { %>
+                    <div class="alert alert-info mb-3">
+                        <%= busca ? 'Nenhuma matéria corresponde à busca.' : 'Nenhuma matéria cadastrada nesta edição.' %>
+                    </div>
+                <% } %>
+
+                <div class="row g-3">
+                    <% [1, 2, 3].forEach(coluna => {
+                        const itensColuna = materias.filter(item => Number(item.coluna) === coluna);
+                        const cores = ['success', 'primary', 'info'];
+                        const nomes = ['⬅️ Coluna 1 — Esquerda', '🔲 Coluna 2 — Central', '➡️ Coluna 3 — Direita'];
+                    %>
+                        <div class="col-12 col-lg-4">
+                            <section class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-<%= cores[coluna - 1] %>-subtle text-<%= cores[coluna - 1] %>-emphasis fw-bold d-flex justify-content-between align-items-center py-2">
+                                    <span><%= nomes[coluna - 1] %></span>
+                                    <span class="badge text-bg-<%= cores[coluna - 1] %>"><%= itensColuna.length %></span>
+                                </div>
+                                <div class="card-body p-2 bg-body-tertiary coluna-jornal">
+                                    <% if (!itensColuna.length) { %>
+                                        <div class="alert alert-warning text-center py-4 my-2">
+                                            <div class="fw-bold mb-1 small">Coluna sem matérias<%= busca ? ' encontradas' : '' %>.</div>
+                                            <% if (!busca && edicao.status !== 'Fechada') { %>
+                                                <a class="btn btn-xs btn-outline-warning fw-bold mt-2" href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias/nova?coluna=<%= coluna %>">+ Preencher coluna</a>
+                                            <% } %>
+                                        </div>
+                                    <% } else { %>
+                                        <% itensColuna.forEach(item => { const inativa = item.status === 'Inativo'; %>
+                                            <article class="card card-materia bg-body mb-2 border-0 shadow-sm border-start border-3 <%= inativa ? 'border-secondary opacity-75' : 'border-success' %>">
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <span class="badge text-bg-success small"><%= item.categoria || 'Geral' %></span>
+                                                        <% if (inativa) { %><span class="badge text-bg-secondary small">Oculta</span><% } %>
+                                                    </div>
+                                                    <h2 class="h6 card-title fw-bold text-body-emphasis mb-1 small"><%= item.titulo %></h2>
+                                                    <p class="text-body-secondary small mb-2 resumo-materia" style="font-size:.78rem">
+                                                        <%= item.resumo || 'Sem resumo cadastrado.' %>
+                                                    </p>
+                                                    <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                                                        <span class="text-body-tertiary small">Posição: <strong class="text-body"><%= item.ordem %></strong> · <%= item.tipo %></span>
+                                                        <% if (edicao.status !== 'Fechada') { %>
+                                                            <div class="text-nowrap">
+                                                                <a class="btn btn-xs btn-outline-success" href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias/<%= encodeURIComponent(item.id) %>" title="Editar matéria">✏️ Editar</a>
+                                                                <form class="d-inline" method="post" action="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias/<%= encodeURIComponent(item.id) %>/excluir" onsubmit="return confirm('Excluir esta matéria?');">
+                                                                    <button type="submit" class="btn btn-xs btn-outline-danger" title="Excluir matéria">🗑️</button>
+                                                                </form>
+                                                            </div>
+                                                        <% } else { %>
+                                                            <span class="small text-body-secondary">Somente leitura</span>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        <% }) %>
+                                    <% } %>
+                                </div>
+                            </section>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

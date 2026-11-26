@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= cliente.id ? 'Editar Cliente PJ' : 'Cadastro de Clientes PJ' %></title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .titulo-secao { color: var(--bs-success); font-weight: 700; margin-bottom: 20px; }
+        .form-label { font-weight: 600; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+
+    <main class="container-fluid">
+        <div class="card card-custom border-0">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 text-center"><%= cliente.id ? 'Editar Cliente Pessoa Jurídica' : 'Cadastro de Clientes Pessoa Jurídica' %></h3>
+            </div>
+            <div class="sticky-top bg-body pt-2 pb-2 mb-3 border-bottom">
+                <div class="container-fluid d-flex flex-wrap align-items-center gap-2">
+                    <a class="btn btn-sm btn-primary" href="/clientes-pj/novo">🆕 Novo</a>
+                    <button class="btn btn-sm btn-success" type="submit" form="formClientePJ">💾 Salvar</button>
+                    <a class="btn btn-sm btn-secondary" href="/clientes-pj/novo">🧹 Limpar</a>
+                    <a class="btn btn-sm btn-outline-success" href="/clientes-pj">📋 Tabela</a>
+                    <form class="input-group input-group-sm ms-md-auto" action="/clientes-pj" method="get" style="max-width:420px">
+                        <input name="q" class="form-control" placeholder="Razão, CNPJ, fantasia, e-mail ou rua" value="<%= busca || '' %>">
+                        <button class="btn btn-outline-success" type="submit">🔍</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-danger" role="alert"><%= mensagem %></div><% } %>
+                <% if (cliente.id && !cliente.cnpjValido) { %>
+                    <div class="alert alert-warning" role="alert">
+                        Este CNPJ legado não passa na validação dos dígitos verificadores. Você pode salvar outros campos mantendo o CNPJ; para alterá-lo, informe um CNPJ válido.
+                    </div>
+                <% } %>
+
+                <form id="formClientePJ" action="<%= cliente.id ? '/clientes-pj/' + cliente.id : '/clientes-pj' %>" method="post" autocomplete="off">
+                    <h5 class="titulo-secao mb-3">Dados da Empresa</h5>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="razaoSocial" class="form-label">Razão Social</label>
+                            <input type="text" id="razaoSocial" name="razaoSocial" class="form-control" value="<%= cliente.razaoSocial || '' %>" maxlength="200" autocomplete="organization" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="cnpj" class="form-label">CNPJ</label>
+                            <input type="text" id="cnpj" name="cnpj" class="form-control" value="<%= cliente.cnpj || '' %>" data-original-cnpj="<%= cliente.cnpj || '' %>" maxlength="18" placeholder="00.000.000/0000-00" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="nomeFantasia" class="form-label">Nome Fantasia</label>
+                            <input type="text" id="nomeFantasia" name="nomeFantasia" class="form-control" value="<%= cliente.nomeFantasia || '' %>" maxlength="200">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="ie" class="form-label">Inscrição Estadual</label>
+                            <input type="text" id="ie" name="ie" class="form-control" value="<%= cliente.ie || '' %>" maxlength="30">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="dataAbertura" class="form-label">Data de Abertura</label>
+                            <input type="date" id="dataAbertura" name="dataAbertura" class="form-control" value="<%= cliente.dataAbertura || '' %>">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="porte" class="form-label">Porte da Empresa</label>
+                            <select id="porte" name="porte" class="form-select">
+                                <option value="">Selecione</option>
+                                <% ['MEI', 'ME', 'EPP', 'Média', 'Grande'].forEach(opcao => { %>
+                                    <option value="<%= opcao %>" <%= cliente.porte === opcao ? 'selected' : '' %>><%= opcao %></option>
+                                <% }) %>
+                                <% if (cliente.porte && !['MEI', 'ME', 'EPP', 'Média', 'Grande'].includes(cliente.porte)) { %>
+                                    <option value="<%= cliente.porte %>" selected><%= cliente.porte %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="regimeTributario" class="form-label">Regime Tributário</label>
+                            <select id="regimeTributario" name="regimeTributario" class="form-select">
+                                <option value="">Selecione</option>
+                                <% ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'MEI'].forEach(opcao => { %>
+                                    <option value="<%= opcao %>" <%= cliente.regimeTributario === opcao ? 'selected' : '' %>><%= opcao %></option>
+                                <% }) %>
+                                <% if (cliente.regimeTributario && !['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'MEI'].includes(cliente.regimeTributario)) { %>
+                                    <option value="<%= cliente.regimeTributario %>" selected><%= cliente.regimeTributario %></option>
+                                <% } %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h5 class="titulo-secao mt-4 mb-3">Responsável / Contato</h5>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="nomeResponsavel" class="form-label">Nome do Responsável</label>
+                            <input type="text" id="nomeResponsavel" name="nomeResponsavel" class="form-control" value="<%= cliente.nomeResponsavel || '' %>" maxlength="200">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="cargo" class="form-label">Cargo</label>
+                            <input type="text" id="cargo" name="cargo" class="form-control" value="<%= cliente.cargo || '' %>" maxlength="100">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="telefone" class="form-label">Telefone Comercial</label>
+                            <input type="text" id="telefone" name="telefone" class="form-control" value="<%= cliente.telefone || '' %>" maxlength="30" placeholder="(51) 3333-3333">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="celular" class="form-label">Celular / WhatsApp</label>
+                            <input type="text" id="celular" name="celular" class="form-control" value="<%= cliente.celular || '' %>" maxlength="30" placeholder="(51) 99999-9999">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="email" class="form-label">E-mail</label>
+                            <input type="email" id="email" name="email" class="form-control" value="<%= cliente.email || '' %>" maxlength="254" autocomplete="email">
+                        </div>
+                    </div>
+
+                    <h5 class="titulo-secao mt-4 mb-3">Endereço</h5>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="cep" class="form-label">CEP</label>
+                            <input type="text" id="cep" name="cep" class="form-control" value="<%= cliente.cep || '' %>" maxlength="9" placeholder="00000-000">
+                        </div>
+                        <div class="col-md-7 mb-3">
+                            <label for="rua" class="form-label">Rua</label>
+                            <input type="text" id="rua" name="rua" class="form-control" value="<%= cliente.rua || '' %>" maxlength="255">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="numero" class="form-label">Número</label>
+                            <input type="text" id="numero" name="numero" class="form-control" value="<%= cliente.numero || '' %>" maxlength="40">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="bairro" class="form-label">Bairro</label>
+                            <input type="text" id="bairro" name="bairro" class="form-control" value="<%= cliente.bairro || '' %>" maxlength="150">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="cidade" class="form-label">Cidade</label>
+                            <input type="text" id="cidade" name="cidade" class="form-control" value="<%= cliente.cidade || '' %>" maxlength="150">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <select id="estado" name="estado" class="form-select">
+                                <option value="">Selecione</option>
+                                <% estados.forEach(estado => { %>
+                                    <option value="<%= estado %>" <%= cliente.estado === estado ? 'selected' : '' %>><%= estado %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="observacoes" class="form-label titulo-secao">Observações</label>
+                        <textarea id="observacoes" name="observacoes" class="form-control" rows="4" maxlength="10000"><%= cliente.observacoes || '' %></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const cnpjInput = document.getElementById('cnpj');
+        const formClientePJ = document.getElementById('formClientePJ');
+
+        function normalizarCNPJ(valor) {
+            return valor.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        }
+
+        function validarCNPJ(valor) {
+            const cnpj = normalizarCNPJ(valor);
+            if (!/^[A-Z0-9]{12}\d{2}$/.test(cnpj) || /^([A-Z0-9])\1+$/.test(cnpj)) return false;
+            const digito = (base, pesos) => {
+                const soma = [...base].reduce((total, caractere, indice) => (
+                    total + (caractere.charCodeAt(0) - 48) * pesos[indice]
+                ), 0);
+                const resto = soma % 11;
+                return resto < 2 ? 0 : 11 - resto;
+            };
+            return digito(cnpj.slice(0, 12), [5,4,3,2,9,8,7,6,5,4,3,2]) === Number(cnpj[12])
+                && digito(cnpj.slice(0, 13), [6,5,4,3,2,9,8,7,6,5,4,3,2]) === Number(cnpj[13]);
+        }
+
+        function mascararCNPJ() {
+            const cnpj = normalizarCNPJ(cnpjInput.value).slice(0, 14);
+            cnpjInput.value = cnpj.length === 14
+                ? `${cnpj.slice(0, 2)}.${cnpj.slice(2, 5)}.${cnpj.slice(5, 8)}/${cnpj.slice(8, 12)}-${cnpj.slice(12)}`
+                : cnpj;
+        }
+
+        cnpjInput.addEventListener('input', mascararCNPJ);
+        formClientePJ.addEventListener('submit', event => {
+            const cnpj = normalizarCNPJ(cnpjInput.value);
+            const original = normalizarCNPJ(cnpjInput.dataset.originalCnpj || '');
+            if (!validarCNPJ(cnpj) && cnpj !== original) {
+                event.preventDefault();
+                alert('Informe um CNPJ válido. Um CNPJ legado inválido só pode ser mantido sem alteração.');
+            }
+        });
+    </script>
+</body>
+</html>

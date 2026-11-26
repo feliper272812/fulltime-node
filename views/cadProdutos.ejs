@@ -1,0 +1,778 @@
+<!-- =========================================================
+  ARQUIVO: cadProdutos.ejs
+
+  FORMULÁRIO DE CADASTRO DE PRODUTOS COM SUPORTE A LEITOR USB
+
+  Tecnologias:
+- HTML5
+- CSS3
+- Bootstrap 5.3
+
+Tema:
+- Light
+- Dark
+- Auto
+
+  Autor: Felipe Rodrigues - FullTime Technology (Otimizado 2026)
+========================================================= -->
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos</title>
+
+    <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+    <!-- SCRIPT OFICIAL DE TEMAS BOOTSTRAP 5.3 -->
+    <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+
+    <script src="/js/color-modes.js"></script>
+
+    <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+    <!-- Bootstrap CSS v5.3.8 -->
+    <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+
+    <!-- BOOTSTRAP 5.3.3 CSS (CDN oficial) -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous"> -->
+
+    <!-- BOOTSTRAP 5.3.3 CSS LOCAL -->
+    <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet">
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let cssCarregado = false;
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    let sheet = document.styleSheets[i];
+                    if (sheet.href && sheet.href.indexOf("bootstrap.min.css") !== -1) {
+                        if (sheet.cssRules && sheet.cssRules.length > 0) {
+                            cssCarregado = true;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // Captura restrições de segurança de CORS se houverem
+                }
+            }
+
+            if (!cssCarregado) {
+                alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+                console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+                
+                    let cdn = document.createElement("link");
+                    cdn.rel = "stylesheet";
+                    cdn.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css";
+                    cdn.integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH";
+                    cdn.crossOrigin = "anonymous";
+                    document.head.appendChild(cdn);
+                }
+
+        });
+        
+    </script>
+    
+    <style>
+        html, body { min-height: 100%; overflow-y: auto; }
+        body { background-color: #f5f7fb; transition: background-color 0.3s ease; padding-top: 41px; padding-bottom: 40px; }
+        [data-bs-theme="dark"] body { background-color: #121212; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,0.08); }
+        .titulo-secao { color: var(--bs-success); font-weight: bold; margin-bottom: 20px; }
+        .form-label { font-weight: 600; }
+        .btn-bd-primary {
+            --bd-violet-bg: #712cf9; --bs-btn-font-weight: 600; --bs-btn-color: var(--bs-white);
+            --bs-btn-bg: var(--bd-violet-bg); --bs-btn-border-color: var(--bd-violet-bg);
+        }
+        .preview-image {
+            width: 320px; height: 320px; border: 2px solid #198754; border-radius: 12px;
+            background: #ffffff; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin: auto; box-shadow: 0 4px 18px rgba(0,0,0,.15); transition: .30s;
+        }
+        .preview-image:hover { transform: scale(1.02); }
+        .preview-image img { width: 100%; height: 100%; object-fit: contain; }
+        #previewImagemPlaceholder { color: #999; font-size: 18px; text-align: center; }
+        .colunaFormulario { width: 70%; } .colunaImagem { width: 30%; }
+        @media (max-width: 992px) {
+            .colunaFormulario { width: 100%; } .colunaImagem { width: 100%; margin-top: 30px; }
+            .preview-image { width: 260px; height: 260px; }
+        }
+    </style>
+</head>
+<body>
+
+  <header>
+
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+    <!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+    <%- include('partials/navbar') %>
+
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->    
+    <!-- ///////      Área de Impressão do Cupom       /////////////////////////////////// -->
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+    <div id="area-impressao-cupom"></div>
+
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+</header>
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+<!-- ///////      CONTEÚDO PRINCIPAL DO FORMULÁRIO                                      /////////////// -->
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+ <!-- <div class="container-fluid"> -->
+     <!-- <div class="row justify-content-center"> -->
+         <!-- <div class="col-12 px-md-4"> -->
+            <div class="card card-custom border-0 mt-3">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0 text-center">Cadastro de Produtos</h3></div>
+
+                    <!-- BARRA DE BOTÕES GERENCIAIS UNIFICADA -->
+                    <div class="sticky-top bg-body pt-2 pb-2 mb-3 border-bottom" style="z-index: 1020;">
+                        <div class="d-flex flex-wrap align-items-center gap-1">&nbsp;
+                            <button type="button" class="btn btn-sm btn-primary" onclick="novoProduto()">➕ Novo</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="salvarProduto(event)">💾 Salvar</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="limparFormulario()">🧹 Limpar</button>
+                            <button type="button" class="btn btn-sm btn-warning fw-bold text-dark" onclick="baixarJSON()">⬇ JSON</button>
+                            <a class="btn btn-sm btn-outline-success" href="/produtos">📋 Tabela</a>
+                            <span id="badgeTotalProdutosForm" class="badge bg-dark text-white p-2" style="font-size: 0.82rem; border-radius: 4px;">Total de produtos: <%= totalProdutos %></span>
+                            <div class="vr mx-2"></div>
+                            <div class="input-group input-group-sm ms-auto" style="max-width:380px">
+                                <input id="inputCodigo" class="form-control" placeholder="Pesquisar produto...">
+                                <button type="button" class="btn btn-outline-success" onclick="pesquisarCodigo()">🔍</button>&nbsp;&nbsp;
+                            </div>
+                        </div>
+                    </div>
+
+
+                <div class="card-body">
+                    <% if (mensagem) { %><div class="alert alert-danger" role="alert"><%= mensagem %></div><% } %>
+                    
+
+                    <!-- PREVENÇÃO CONTRA DISPAROS DO LEITOR USB NO FORMULÁRIO -->
+                    <form id="cadProdutos" method="post" action="<%= produto.id ? `/produtos/${produto.id}` : '/produtos' %>" data-edit-id="<%= produto.id || '' %>" onsubmit="return confirmarSalvarProduto(event);">
+                        <input type="hidden" name="id" value="<%= produto.id || '' %>">
+                        <input type="hidden" name="dataCadastro" value="<%= produto.dataCadastro || '' %>">
+                        <input type="hidden" name="imagemBase64" id="imagemBase64" value="<%= produto.imagemBase64 || '' %>">
+                        <input type="hidden" name="imagemNome" id="imagemNome" value="<%= produto.imagemNome || '' %>">
+                        <input type="hidden" name="local" id="localImagem" value="<%= produto.local || '' %>">
+                        <input type="hidden" name="nomeArquivoImagem" id="nomeArquivoImagemHidden" value="<%= produto.nomeArquivoImagem || '' %>">
+                        <div class="row g-4">
+                            <!-- COLUNA DA ESQUERDA: FORMULÁRIO DE DADOS (70%) -->
+                            <div class="col-lg-8 colunaFormulario">
+                                <h5 class="titulo-secao mb-3">Dados do Produto</h5>
+                                <div class="row">
+                                    <div class="col-md-2 mb-3"><label class="form-label">ID</label><input type="text" id="produtoId" class="form-control bg-body-secondary text-muted" placeholder="(auto)" value="<%= produto.id || '' %>" readonly></div>
+                                    <div class="col-md-7 mb-3"><label class="form-label">Nome do Produto</label><input type="text" id="nome" name="nome" class="form-control" placeholder="Nome" maxlength="255" value="<%= produto.nome || '' %>" required></div>
+                                    <div class="col-md-3 mb-3"><label class="form-label">Código</label><input type="text" id="codigo" name="codigo" class="form-control" placeholder="0001" maxlength="60" value="<%= produto.codigo || '' %>" required></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5 mb-3">
+                                        <label class="form-label">Código de Barras</label>
+                                        <div class="input-group">
+                                            <input type="text" id="codigoBarras" name="codigoBarras" class="form-control" placeholder="789..." maxlength="100" value="<%= produto.codigoBarras || '' %>">
+                                            <button type="button" id="btnLeitorUSB" class="btn btn-success" onclick="ativarLeitorUSB()" title="Usar leitor de código de barras USB">🔌 Leitor USB</button>
+                                            <button type="button" class="btn btn-outline-success" onclick="abrirScanner()" title="Escanear código de barras com a câmera">📷 Câmera</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3"><label class="form-label">SKU</label><input type="text" id="sku" name="sku" class="form-control" placeholder="SKU-001" maxlength="100" value="<%= produto.sku || '' %>"></div>
+                                    <div class="col-md-3 mb-3"><label class="form-label">Status</label><select class="form-select" id="status" name="status"><option value="Ativo" <%= produto.status === 'Ativo' ? 'selected' : '' %>>Ativo</option><option value="Inativo" <%= produto.status === 'Inativo' ? 'selected' : '' %>>Inativo</option></select></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3"><label class="form-label">Marca</label><input type="text" id="marca" name="marca" class="form-control" placeholder="Marca" maxlength="150" value="<%= produto.marca || '' %>"></div>
+                                    <div class="col-md-5 mb-3"><label class="form-label">Categoria</label><select class="form-select" id="categoria" name="categoria"><% if (produto.categoria && !['Selecione', 'Informática', 'Eletrônicos', 'Periféricos'].includes(produto.categoria)) { %><option value="<%= produto.categoria %>" selected><%= produto.categoria %></option><% } %><option value="Selecione" <%= !produto.categoria || produto.categoria === 'Selecione' ? 'selected' : '' %>>Selecione</option><option value="Informática" <%= produto.categoria === 'Informática' ? 'selected' : '' %>>Informática</option><option value="Eletrônicos" <%= produto.categoria === 'Eletrônicos' ? 'selected' : '' %>>Eletrônicos</option><option value="Periféricos" <%= produto.categoria === 'Periféricos' ? 'selected' : '' %>>Periféricos</option></select></div>
+                                    <div class="col-md-3 mb-3"><label class="form-label">Unidade</label><select class="form-select" id="unidade" name="unidade"><% if (produto.unidade && !['UN', 'KG', 'CX'].includes(produto.unidade)) { %><option value="<%= produto.unidade %>" selected><%= produto.unidade %></option><% } %><option value="UN" <%= produto.unidade === 'UN' ? 'selected' : '' %>>UN</option><option value="KG" <%= produto.unidade === 'KG' ? 'selected' : '' %>>KG</option><option value="CX" <%= produto.unidade === 'CX' ? 'selected' : '' %>>CX</option></select></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label class="form-label">NCM</label><input type="text" id="ncm" name="ncm" class="form-control" placeholder="0000.00.00" maxlength="20" value="<%= produto.ncm || '' %>"></div>
+                                    <div class="col-md-6 mb-3"><label class="form-label">CEST</label><input type="text" id="cest" name="cest" class="form-control" placeholder="00.000.00" maxlength="20" value="<%= produto.cest || '' %>"></div>
+                                </div>
+
+                                <h5 class="titulo-secao mt-3 mb-3">Preços e Estoque</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label class="form-label">Preço de Custo</label><input type="number" id="precoCusto" name="precoCusto" min="0" step="0.01" class="form-control" placeholder="0,00" value="<%= produto.precoCusto ?? '' %>"></div>
+                                    <div class="col-md-6 mb-3"><label class="form-label">Preço de Venda</label><input type="number" id="precoVenda" name="precoVenda" min="0" step="0.01" class="form-control" placeholder="0,00" value="<%= produto.precoVenda ?? '' %>"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label class="form-label">Estoque Atual</label><input type="number" id="estoque" name="estoque" min="0" step="0.001" class="form-control" placeholder="0" value="<%= produto.estoque ?? '' %>"></div>
+                                    <div class="col-md-6 mb-3"><label class="form-label">Estoque Mínimo</label><input type="number" id="estoqueMinimo" name="estoqueMinimo" min="0" step="0.001" class="form-control" placeholder="0" value="<%= produto.estoqueMinimo ?? '' %>"></div>
+                                </div>
+                            </div>
+                            <!-- COLUNA DA DIREITA: CONTAINER DE IMAGEM MÍDIA (30%) -->
+                            <div class="col-lg-4 colunaImagem">
+                                <div class="card shadow-sm border-success h-100 d-flex flex-column justify-content-between">
+                                    <div class="card-header bg-success text-white text-center"><strong>Imagem do Produto</strong></div>
+                                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                                        <div class="preview-image" id="previewImagemProduto">
+                                            <span id="previewImagemPlaceholder" class="<%= produto.imagemSrc ? 'd-none' : '' %>">Nenhuma imagem</span>
+                                            <img id="previewImagemTag" class="<%= produto.imagemSrc ? '' : 'd-none' %>" src="<%= produto.imagemSrc || '' %>" alt="Imagem do Produto">
+                                        </div>
+                                        <button class="btn btn-success w-100 mt-3" type="button" onclick="document.getElementById('inputImagemProduto').click();">📷 Selecionar Imagem</button>
+                                        <input type="file" id="inputImagemProduto" accept="image/*" class="d-none" onchange="handleImagemSelecionada(event)">
+                                        <button class="btn btn-outline-success w-100 mt-2" type="button" onclick="abrirCamera()">📸 Usar Câmera</button>
+                                        <div id="nomeArquivoImagem" class="small text-secondary mt-2 text-truncate"><%= produto.imagemNome || produto.nomeArquivoImagem || 'Nenhuma imagem selecionada' %></div>
+                                        <button id="btnRemoverImagem" type="button" class="btn btn-outline-danger w-100 mt-2 d-none" onclick="removerImagem()">Remover Imagem</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CAMPO DE DESCRIÇÃO -->
+                        <div class="row mt-2">
+                            <div class="col-lg-8">
+                                <h5 class="titulo-secao mb-3">Descrição</h5>
+                                <div class="mb-4">
+                                    <textarea id="descricao" name="descricao" class="form-control" rows="4" maxlength="10000" placeholder="Detalhes técnicos adicionais..."><%= produto.descricao || '' %></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div> <!-- Fim .card-body -->
+            </div> <!-- Fim .card-custom -->
+        <!-- </div> --><!-- Fim .col-12 -->
+    <!-- </div> --><!-- Fim .row -->
+<!-- </div> --><!-- Fim .container-fluid -->
+
+<!-- MODAL DA CÂMERA -->
+<div class="modal fade" id="modalCamera" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Capturar Foto do Produto</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="pararCamera()" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <video id="videoCamera" autoplay playsinline style="width:100%; max-height:360px; background:#000;" class="rounded"></video>
+                <div id="erroCameraMsg" class="alert alert-danger d-none mt-2"></div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-secondary" onclick="pararCamera()" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="capturarFoto()">Tirar Foto</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DO SCANNER DE CÓDIGO DE BARRAS -->
+<div class="modal fade" id="modalScanner" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Escanear Código de Barras</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center bg-dark">
+                <div id="leitorScanner" class="w-100 rounded overflow-hidden"></div>
+                <div id="erroScannerMsg" class="alert alert-danger d-none mt-2"></div>
+                <p class="small text-light mt-2 mb-0">Aponte a câmera para o código de barras do produto.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE EXIBIÇÃO DOS RESULTADOS DA BUSCA -->
+<div class="modal fade" id="modalPesquisaProduto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Busca</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalPesquisaProdutoBody"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+<!-- ///////      SCRIPTS DE LÓGICA - ENGINE DO BANCO E GESTÃO DE IMAGENS              /////////////// -->
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+<script>
+    let imagemAtualBase64 = document.getElementById('imagemBase64').value ||
+        document.getElementById('previewImagemTag').getAttribute('src') || null;
+    let imagemAtualNome = document.getElementById('imagemNome').value ||
+        document.getElementById('nomeArquivoImagemHidden').value || '';
+    let imagemEhLegada = Boolean(imagemAtualBase64 && !document.getElementById('imagemBase64').value);
+    let formularioAlterado = false;
+
+    function comprimirImagem(dataUrl, maxLargura = 600, qualidade = 0.8) {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+                const escala = Math.min(1, maxLargura / img.width);
+                const c = document.createElement('canvas');
+                c.width = Math.round(img.width * escala);
+                c.height = Math.round(img.height * escala);
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height);
+                ctx.drawImage(img, 0, 0, c.width, c.height);
+                resolve(c.toDataURL('image/jpeg', qualidade));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    }
+
+    function handleImagemSelecionada(event) {
+        const arquivo = event.target.files[0];
+        if (!arquivo) return;
+        imagemAtualNome = arquivo.name;
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            imagemAtualBase64 = await comprimirImagem(e.target.result);
+            imagemEhLegada = false;
+            exibirPreviewImagem(imagemAtualBase64);
+            formularioAlterado = true;
+        };
+        reader.readAsDataURL(arquivo);
+    }
+
+    function exibirPreviewImagem(dataUrl) {
+        const placeholder = document.getElementById('previewImagemPlaceholder');
+        const tag = document.getElementById('previewImagemTag');
+        const btnRemover = document.getElementById('btnRemoverImagem');
+        const txtNome = document.getElementById('nomeArquivoImagem');
+        if (!tag) return;
+        // Caminho inexistente / arquivo quebrado: mostra aviso em vez de ficar em branco
+        if (!tag.dataset.erroBind) {
+            tag.dataset.erroBind = '1';
+            tag.addEventListener('error', () => {
+                if (!tag.getAttribute('src')) return;
+                tag.classList.add('d-none');
+                if (placeholder) { placeholder.textContent = 'Imagem não encontrada'; placeholder.classList.remove('d-none'); }
+                if (txtNome) txtNome.textContent = 'Arquivo não encontrado: ' + tag.getAttribute('src').slice(0, 80);
+            });
+        }
+        if (dataUrl) {
+            if (placeholder) placeholder.textContent = 'Nenhuma imagem';
+            tag.src = dataUrl; tag.classList.remove('d-none');
+            placeholder?.classList.add('d-none'); btnRemover?.classList.remove('d-none');
+            if(txtNome) txtNome.textContent = imagemAtualNome || "Imagem carregada";
+        } else {
+            tag.removeAttribute('src'); tag.classList.add('d-none');
+            if (placeholder) placeholder.textContent = 'Nenhuma imagem';
+            placeholder?.classList.remove('d-none'); btnRemover?.classList.add('d-none');
+            if(txtNome) txtNome.textContent = "Nenhuma imagem selecionada";
+        }
+    }
+
+    function removerImagem() {
+        imagemAtualBase64 = null; imagemAtualNome = ''; imagemEhLegada = false;
+        if(document.getElementById('inputImagemProduto')) document.getElementById('inputImagemProduto').value = '';
+        document.getElementById('imagemBase64').value = '';
+        document.getElementById('imagemNome').value = '';
+        document.getElementById('localImagem').value = '';
+        document.getElementById('nomeArquivoImagemHidden').value = '';
+        exibirPreviewImagem(null); formularioAlterado = true;
+    }
+
+    let cameraStream = null;
+    let modalCameraInstancia = null;
+    let cameraListenerOk = false;
+    let cameraToken = 0;
+
+    function mensagemErroCamera(err) {
+        const nome = err && err.name;
+        if (nome === 'NotAllowedError' || nome === 'SecurityError')
+            return 'Permissão negada. Ative o acesso à câmera no seu navegador.';
+        if (nome === 'NotFoundError' || nome === 'DevicesNotFoundError')
+            return 'Nenhuma câmera foi encontrada neste dispositivo.';
+        if (nome === 'NotReadableError' || nome === 'TrackStartError')
+            return 'A câmera está ocupada por outro programa.';
+        return 'Erro: ' + (err && err.message ? err.message : err);
+    }
+
+    async function obterStreamCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            const e = new Error('Câmera indisponível: abra a página por HTTPS ou localhost (ou use o navegador atualizado).');
+            e.name = 'InsecureContext';
+            throw e;
+        }
+        const tentativas = [
+            { video: { facingMode: { ideal: 'environment' } }, audio: false },
+            { video: true, audio: false }
+        ];
+        let ultimoErro;
+        for (const c of tentativas) {
+            try { return await navigator.mediaDevices.getUserMedia(c); }
+            catch (e) {
+                ultimoErro = e;
+                if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError' || e.name === 'NotReadableError')) throw e;
+            }
+        }
+        throw ultimoErro;
+    }
+
+    async function abrirCamera() {
+        const modalEl = document.getElementById('modalCamera');
+        const erroMsg = document.getElementById('erroCameraMsg');
+        const video = document.getElementById('videoCamera');
+        erroMsg.classList.add('d-none'); erroMsg.textContent = '';
+
+        pararCamera();
+        const token = ++cameraToken;
+
+        modalCameraInstancia = bootstrap.Modal.getOrCreateInstance(modalEl);
+        if (!cameraListenerOk) {
+            modalEl.addEventListener('hidden.bs.modal', pararCamera);
+            cameraListenerOk = true;
+        }
+        modalCameraInstancia.show();
+
+        try {
+            const stream = await obterStreamCamera();
+            if (token !== cameraToken) { stream.getTracks().forEach(t => t.stop()); return; }
+            cameraStream = stream;
+            video.srcObject = stream;
+            video.muted = true;
+            video.play().catch(() => {});
+        } catch (err) {
+            erroMsg.textContent = mensagemErroCamera(err);
+            erroMsg.classList.remove('d-none');
+        }
+    }
+
+    function pararCamera() {
+        cameraToken++;
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        const video = document.getElementById('videoCamera');
+        if (video) video.srcObject = null;
+    }
+
+    function capturarFoto() {
+        const video = document.getElementById('videoCamera');
+        if (!video || !video.videoWidth) { alert('Câmera não está pronta.'); return; }
+
+        const canvas = document.createElement('canvas');
+        const MAX_LARGURA = 600;
+        const escala = Math.min(1, MAX_LARGURA / video.videoWidth);
+        canvas.width = Math.round(video.videoWidth * escala);
+        canvas.height = Math.round(video.videoHeight * escala);
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        imagemAtualBase64 = canvas.toDataURL('image/jpeg', 0.75);
+        imagemEhLegada = false;
+        imagemAtualNome = 'foto_camera_' + Date.now() + '.jpg';
+        exibirPreviewImagem(imagemAtualBase64);
+        formularioAlterado = true;
+
+        if (modalCameraInstancia) modalCameraInstancia.hide();
+    }
+
+    let scannerInstancia = null;
+    let scannerListenerOk = false;
+    let scannerToken = 0;
+    let scannerLibPromise = null;
+
+    function carregarScriptExterno(src) {
+        return new Promise((resolve, reject) => {
+            const sc = document.createElement('script');
+            sc.src = src;
+            sc.onload = resolve;
+            sc.onerror = () => { sc.remove(); reject(new Error('Falha ao carregar ' + src)); };
+            document.head.appendChild(sc);
+        });
+    }
+
+    function carregarLibScanner() {
+        if (window.Html5Qrcode) return Promise.resolve();
+        if (!scannerLibPromise) {
+            scannerLibPromise = carregarScriptExterno('/js/html5-qrcode.min.js')
+                .catch(() => carregarScriptExterno('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'))
+                .then(() => { if (!window.Html5Qrcode) throw new Error('Biblioteca do leitor não inicializou.'); })
+                .catch(() => { scannerLibPromise = null; throw new Error('Erro ao carregar biblioteca do leitor.'); });
+        }
+        return scannerLibPromise;
+    }
+
+    async function pararScanner() {
+        scannerToken++;
+        const inst = scannerInstancia;
+        scannerInstancia = null;
+        if (!inst) return;
+        try { if (inst.isScanning) await inst.stop(); } catch (e) {}
+        try { inst.clear(); } catch (e) {}
+    }
+
+    async function abrirScanner() {
+        const modalEl = document.getElementById('modalScanner');
+        const erroMsg = document.getElementById('erroScannerMsg');
+        erroMsg.classList.add('d-none'); erroMsg.textContent = '';
+
+        await pararScanner();
+        const token = ++scannerToken;
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        if (!scannerListenerOk) {
+            modalEl.addEventListener('hidden.bs.modal', pararScanner);
+            scannerListenerOk = true;
+        }
+        modal.show();
+
+        try {
+            await carregarLibScanner();
+            if (token !== scannerToken) return;
+
+            const F = Html5QrcodeSupportedFormats;
+            const inst = new Html5Qrcode('leitorScanner', {
+                // Deixe só o que você realmente usa (acrescente CODE_128 se precisar)
+                formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E],
+                experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                verbose: false
+            });
+            scannerInstancia = inst;
+
+            let lido = false;
+            const config = {
+                fps: 15,
+                // Caixa proporcional ao vídeo (larga e baixa, formato de código de barras)
+                qrbox: (w, h) => ({
+                    width: Math.floor(w * 0.9),
+                    height: Math.floor(Math.min(h * 0.5, 180))
+                }),
+                // Resolução maior e foco contínuo
+                videoConstraints: {
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    advanced: [{ focusMode: 'continuous' }]
+                }
+            };
+
+            await inst.start({ facingMode: 'environment' }, config, function (texto) {
+                if (lido) return;
+                lido = true;
+                console.log('Scanner leu:', texto);   // diagnóstico
+                const campo = document.getElementById('codigoBarras');
+                campo.value = String(texto).trim();
+                campo.dispatchEvent(new Event('input', { bubbles: true }));
+                campo.classList.add('is-valid');
+                setTimeout(() => campo.classList.remove('is-valid'), 1500);
+                modal.hide();
+            }, () => {});
+        } catch (err) {
+            erroMsg.textContent = 'Erro ao iniciar o scanner de câmera: ' + ((err && err.message) || err);
+            erroMsg.classList.remove('d-none');
+        }
+    }
+    // =========================================================================
+    // MOTOR DE CORREÇÃO COMPLETA PARA O LEITOR DE CÓDIGO DE BARRAS USB
+    // =========================================================================
+    // ---- MODO LEITOR USB (botão "🔌 Leitor USB"): campo fica aguardando o leitor, sem depender de velocidade ----
+    let modoLeitorUSB = false;
+
+    function ativarLeitorUSB() {
+        const campo = document.getElementById('codigoBarras');
+        if (!campo) return;
+        modoLeitorUSB = true;
+        campo.value = '';
+        campo.dataset.placeholderOriginal = campo.dataset.placeholderOriginal || campo.placeholder;
+        campo.placeholder = 'Aguardando leitura... passe o leitor no código';
+        campo.classList.remove('is-valid');
+        campo.classList.add('border-success', 'border-3');
+        campo.focus();
+    }
+
+    function desativarLeitorUSB() {
+        const campo = document.getElementById('codigoBarras');
+        modoLeitorUSB = false;
+        if (!campo) return;
+        campo.classList.remove('border-success', 'border-3');
+        if (campo.dataset.placeholderOriginal) campo.placeholder = campo.dataset.placeholderOriginal;
+    }
+
+    (function () {
+        const campo = document.getElementById('codigoBarras');
+        if (!campo) return;
+        campo.addEventListener('keydown', function (e) {
+            if (!modoLeitorUSB) return;
+            if ((e.key === 'Enter' || e.key === 'Tab') && campo.value.trim()) {
+                e.preventDefault();
+                e.stopPropagation();
+                campo.value = campo.value.trim();
+                formularioAlterado = true;
+                desativarLeitorUSB();
+                campo.classList.add('is-valid');
+                setTimeout(() => campo.classList.remove('is-valid'), 1500);
+            }
+        });
+        campo.addEventListener('blur', desativarLeitorUSB);
+    })();
+
+    const LEITOR_MAX_INTERVALO_MS = 100;  // leitor digita rápido; humano passa disso
+    const LEITOR_MIN_TAMANHO = 4;        // mínimo de caracteres do código
+    let bufferCodigoBarras = "";
+    let tempoUltimoCaractere = 0;
+    let campoAntesDoBurst = null;        // { el, valor } estado do campo antes do 1º caractere
+
+    function resetarBufferLeitor() { bufferCodigoBarras = ""; campoAntesDoBurst = null; }
+
+    // Captura global de entradas rápidas do teclado (comportamento do scanner físico)
+    window.addEventListener("keydown", function (e) {
+        if (modoLeitorUSB) return; // o próprio campo trata a leitura
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (document.querySelector('.modal.show')) return;
+
+        const campoFoco = document.activeElement;
+        if (campoFoco && campoFoco.id === "descricao") return;
+
+        const agora = performance.now();
+        const intervalo = agora - tempoUltimoCaractere;
+        tempoUltimoCaractere = agora;
+
+        // Fim da leitura: Enter (ou Tab, se o leitor estiver configurado assim)
+        if (e.key === "Enter" || e.key === "Tab") {
+            if (bufferCodigoBarras.length >= LEITOR_MIN_TAMANHO && intervalo <= LEITOR_MAX_INTERVALO_MS) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Desfaz o que o leitor "digitou" no campo que estava em foco
+                if (campoAntesDoBurst && campoAntesDoBurst.el) campoAntesDoBurst.el.value = campoAntesDoBurst.valor;
+
+                const inputAlvo = document.getElementById("codigoBarras");
+                if (inputAlvo) {
+                    inputAlvo.value = bufferCodigoBarras;
+                    inputAlvo.dispatchEvent(new Event("input", { bubbles: true }));
+                    formularioAlterado = true;
+                }
+            }
+            resetarBufferLeitor();
+            return;
+        }
+
+        if (e.key.length !== 1) return; // Shift, Backspace, etc.
+
+        if (bufferCodigoBarras === "" || intervalo > LEITOR_MAX_INTERVALO_MS) {
+            // Possível início de nova leitura: guarda o valor do campo antes do caractere entrar
+            bufferCodigoBarras = e.key;
+            campoAntesDoBurst = (campoFoco && 'value' in campoFoco) ? { el: campoFoco, valor: campoFoco.value } : null;
+        } else {
+            bufferCodigoBarras += e.key;
+        }
+    }, true);
+
+    // Evita isoladamente que o input envie o form ao receber o Enter final do leitor
+    document.getElementById('codigoBarras')?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+    function confirmarSalvarProduto() {
+        const formulario = document.getElementById('cadProdutos');
+        if (!formulario.reportValidity()) return false;
+        if (!confirm('Deseja salvar o produto?')) return false;
+
+        document.getElementById('imagemBase64').value = imagemEhLegada ? '' : (imagemAtualBase64 || '');
+        if (!imagemEhLegada) {
+            document.getElementById('imagemNome').value = imagemAtualNome || '';
+            document.getElementById('localImagem').value = '';
+            document.getElementById('nomeArquivoImagemHidden').value = '';
+        }
+        formularioAlterado = false;
+        return true;
+    }
+
+    function salvarProduto(event) {
+        if (event) event.preventDefault();
+        document.getElementById('cadProdutos').requestSubmit();
+    }
+
+    function carregarProdutoNoForm(id) {
+        window.location.href = `/produtos/${encodeURIComponent(id)}/editar`;
+    }
+
+    function limparFormulario() {
+        window.location.href = '/produtos/novo';
+    }
+
+    function novoProduto() { window.location.href = '/produtos/novo'; }
+
+    async function baixarJSON() {
+        try {
+            const resposta = await fetch('/api/produtos');
+            if (!resposta.ok) throw new Error('Não foi possível exportar os produtos.');
+            const produtos = await resposta.json();
+            const blob = new Blob([JSON.stringify(produtos, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = Object.assign(document.createElement('a'), { href: url, download: 'cadProdutos.json' });
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (erro) {
+            alert(erro.message);
+        }
+    }
+
+    async function pesquisarCodigo() {
+        const termo = (document.getElementById('inputCodigo').value || '').trim();
+        if (!termo) return;
+        try {
+            const resposta = await fetch(`/api/produtos?q=${encodeURIComponent(termo)}`);
+            if (!resposta.ok) throw new Error('Não foi possível pesquisar produtos.');
+            const produtos = await resposta.json();
+            if (produtos.length === 0) { alert('Nenhum produto encontrado!'); return; }
+
+            const escaparHTML = valor => String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[caractere]);
+            document.getElementById('modalPesquisaProdutoBody').innerHTML = produtos.map(produto => `
+                <div class="card mb-2 small"><div class="card-body">
+                    <strong>#${escaparHTML(produto.id)} - ${escaparHTML(produto.nome)}</strong><br>
+                    Código: ${escaparHTML(produto.codigo)} | EAN: ${escaparHTML(produto.codigoBarras)}<br>
+                    <button class="btn btn-sm btn-success mt-2 py-0" onclick="carregarProdutoNoForm('${escaparHTML(produto.id)}')">✏️ Carregar</button>
+                </div></div>`).join('');
+            new bootstrap.Modal(document.getElementById('modalPesquisaProduto')).show();
+        } catch (erro) {
+            alert(erro.message);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        exibirPreviewImagem(imagemAtualBase64);
+        if (document.getElementById('codigoBarras').value) document.getElementById('codigoBarras').focus();
+        document.getElementById('cadProdutos')?.querySelectorAll('input, select, textarea').forEach(c => {
+            if (c.id !== 'inputCodigo' && c.type !== 'hidden') c.addEventListener('input', () => formularioAlterado = true);
+        });
+    });
+
+    window.addEventListener('beforeunload', e => { if (formularioAlterado) e.returnValue = ''; });
+
+</script>
+
+    <!-- //////////////////////////////////////////////////////// -->
+    <!-- RODAPÉ FIXO (FOOTER) -->
+    <!-- //////////////////////////////////////////////////////// -->
+
+    <%- include('partials/footer') %>
+
+    <!-- /////////////////////////////////////////// -->
+    <!-- DEPENDÊNCIAS DE SCRIPTS DO ECOSSISTEMA CORE -->
+    <!-- /////////////////////////////////////////// -->
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // CORREÇÃO: Fallback estável apontando para o arquivo completo do Bootstrap JS na jDelivr oficial
+        if (typeof bootstrap === 'undefined') {
+            alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"><\/script>');
+        }
+    </script>
+
+<!-- //////////////////////////////////////////////////////// -->
+<!-- iNCLUDE PARA USART HTML EXTERNO -->
+<!-- //////////////////////////////////////////////////////// -->
+
+</body>
+</html>

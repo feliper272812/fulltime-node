@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= ordem.id ? 'Editar' : 'Nova' %> Ordem de Serviço</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .titulo-secao { color: var(--bs-success); font-weight: bold; margin-bottom: 20px; }
+        .form-label { font-weight: 600; }
+        .assinatura { border-top: 1px solid #555; padding-top: 8px; text-align: center; margin: 60px 24px 0; }
+        @media print {
+            body { padding: 0 !important; background: #fff !important; color: #000 !important; }
+            .navbar, .toolbar, .footer, .nao-imprimir { display: none !important; }
+            .card-custom { box-shadow: none !important; border: 0 !important; }
+            .card-header { display: none !important; }
+            .form-control, .form-select { border: 0 !important; padding-left: 0 !important; color: #000 !important; }
+            textarea.form-control { resize: none; }
+            .assinatura { border-color: #000; }
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid px-2">
+        <div class="card card-custom border-0 mt-3">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 text-center"><%= ordem.id ? 'Editar Ordem de Serviço' : 'Formulário de Ordens de Serviço' %></h3>
+            </div>
+            <div class="toolbar sticky-top bg-body pt-2 pb-2 mb-3 border-bottom nao-imprimir" style="z-index:1020">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a href="/os/novo" class="btn btn-sm btn-primary text-light">➕ Nova OS</a>
+                    <button type="submit" form="formOrdemServico" class="btn btn-sm btn-secondary text-light">💾 Salvar</button>
+                    <button type="reset" form="formOrdemServico" class="btn btn-sm btn-outline-secondary">🧹 Limpar</button>
+                    <button type="button" class="btn btn-sm btn-dark" onclick="window.print()">🖨️ Imprimir</button>
+                    <a href="/os" class="btn btn-sm btn-outline-success">📋 Tabela de O.S.</a>
+                    <span class="badge text-bg-secondary p-2">Total de O.S.: <strong><%= totalOrdens %></strong></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-danger" role="alert"><%= mensagem %></div><% } %>
+                <form id="formOrdemServico" method="post" action="<%= ordem.id ? `/os/${ordem.id}` : '/os' %>" autocomplete="off">
+                    <section>
+                        <h5 class="titulo-secao">Dados da Ordem de Serviço</h5>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="numeroOS">Número da OS</label>
+                                <input id="numeroOS" class="form-control bg-body-secondary text-muted" value="<%= ordem.id ? String(ordem.id).padStart(6, '0') : '(gerado ao salvar)' %>" disabled>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="dataAbertura">Data de Abertura</label>
+                                <input id="dataAbertura" name="dataAbertura" type="date" class="form-control" value="<%= ordem.dataAbertura %>" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="status">Status</label>
+                                <select id="status" name="status" class="form-select">
+                                    <% statusOrdens.forEach(status => { %>
+                                        <option value="<%= status %>" <%= ordem.status === status ? 'selected' : '' %>><%= status %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="prioridade">Prioridade</label>
+                                <select id="prioridade" name="prioridade" class="form-select">
+                                    <% prioridades.forEach(prioridade => { %>
+                                        <option value="<%= prioridade %>" <%= ordem.prioridade === prioridade ? 'selected' : '' %>><%= prioridade %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h5 class="titulo-secao mt-4">Dados do Cliente</h5>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label" for="cliente">Nome do Cliente</label>
+                                <input id="cliente" name="cliente" type="text" class="form-control" maxlength="255" value="<%= ordem.cliente %>" placeholder="Digite o nome do cliente" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="telefone">Telefone</label>
+                                <input id="telefone" name="telefone" type="tel" class="form-control" maxlength="30" value="<%= ordem.telefone %>" placeholder="(51) 90000-0000">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h5 class="titulo-secao mt-4">Equipamento / Produto</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="equipamento">Equipamento</label>
+                                <input id="equipamento" name="equipamento" type="text" class="form-control" maxlength="150" value="<%= ordem.equipamento %>" placeholder="Notebook, celular, impressora...">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="marca">Marca</label>
+                                <input id="marca" name="marca" type="text" class="form-control" maxlength="100" value="<%= ordem.marca %>" placeholder="Marca">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="modelo">Modelo</label>
+                                <input id="modelo" name="modelo" type="text" class="form-control" maxlength="100" value="<%= ordem.modelo %>" placeholder="Modelo">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="numeroSerie">Número de Série</label>
+                                <input id="numeroSerie" name="numeroSerie" type="text" class="form-control" maxlength="150" value="<%= ordem.numeroSerie %>" placeholder="Número de série">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="acessorios">Acessórios</label>
+                                <input id="acessorios" name="acessorios" type="text" class="form-control" maxlength="5000" value="<%= ordem.acessorios %>" placeholder="Fonte, cabo, bateria...">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h5 class="titulo-secao mt-4">Relato do Problema</h5>
+                        <textarea id="relatoProblema" name="relatoProblema" class="form-control" rows="5" maxlength="10000" placeholder="Descreva o defeito informado pelo cliente..." required><%= ordem.relatoProblema %></textarea>
+                    </section>
+
+                    <section>
+                        <h5 class="titulo-secao mt-4">Serviço Executado</h5>
+                        <textarea id="servicoExecutado" name="servicoExecutado" class="form-control" rows="5" maxlength="10000" placeholder="Descreva os serviços realizados..."><%= ordem.servicoExecutado %></textarea>
+                    </section>
+
+                    <section>
+                        <h5 class="titulo-secao mt-4">Valores</h5>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="maoDeObra">Mão de Obra (R$)</label>
+                                <input id="maoDeObra" name="maoDeObra" type="number" min="0" max="9999999999.99" step="0.01" class="form-control valor-os" value="<%= ordem.maoDeObra %>">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="pecas">Peças (R$)</label>
+                                <input id="pecas" name="pecas" type="number" min="0" max="9999999999.99" step="0.01" class="form-control valor-os" value="<%= ordem.pecas %>">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="desconto">Desconto (R$)</label>
+                                <input id="desconto" name="desconto" type="number" min="0" max="9999999999.99" step="0.01" class="form-control valor-os" value="<%= ordem.desconto %>">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" for="valorTotal">Valor Total (R$)</label>
+                                <input id="valorTotal" type="number" class="form-control bg-body-secondary fw-bold" value="<%= ordem.valorTotal %>" disabled>
+                            </div>
+                        </div>
+                        <div id="erroDesconto" class="form-text text-danger d-none">O desconto não pode ser maior que a soma da mão de obra e das peças.</div>
+                    </section>
+
+                    <section>
+                        <h5 class="titulo-secao mt-4">Observações</h5>
+                        <textarea id="observacoes" name="observacoes" class="form-control" rows="4" maxlength="10000" placeholder="Observações internas ou adicionais..."><%= ordem.observacoes %></textarea>
+                    </section>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6"><div class="assinatura">Assinatura do Cliente</div></div>
+                        <div class="col-md-6"><div class="assinatura">Assinatura do Técnico</div></div>
+                    </div>
+                    <div class="d-grid d-md-none mt-4 nao-imprimir">
+                        <button type="submit" class="btn btn-primary">Salvar Ordem de Serviço</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const formularioOS = document.getElementById('formOrdemServico');
+        const valorTotalOS = document.getElementById('valorTotal');
+        const erroDesconto = document.getElementById('erroDesconto');
+
+        function atualizarTotalOS() {
+            const maoDeObra = Math.round(Number(document.getElementById('maoDeObra').value || 0) * 100);
+            const pecas = Math.round(Number(document.getElementById('pecas').value || 0) * 100);
+            const desconto = Math.round(Number(document.getElementById('desconto').value || 0) * 100);
+            valorTotalOS.value = Math.max(0, maoDeObra + pecas - desconto) / 100;
+            erroDesconto.classList.toggle('d-none', desconto <= maoDeObra + pecas);
+        }
+
+        document.querySelectorAll('.valor-os').forEach(campo => campo.addEventListener('input', atualizarTotalOS));
+        formularioOS.addEventListener('submit', event => {
+            atualizarTotalOS();
+            if (!formularioOS.reportValidity()) {
+                event.preventDefault();
+                return;
+            }
+            if (!erroDesconto.classList.contains('d-none')) {
+                event.preventDefault();
+                document.getElementById('desconto').focus();
+                return;
+            }
+        });
+        formularioOS.addEventListener('reset', () => window.setTimeout(atualizarTotalOS, 0));
+        atualizarTotalOS();
+    </script>
+</body>
+</html>

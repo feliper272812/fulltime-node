@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Orçamentos</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .titulo-secao { color: var(--bs-success); font-weight: bold; margin-bottom: 20px; }
+        .form-label { font-weight: 600; }
+        #cabecalho-impressao-timbrado { display: none; }
+        @media print {
+            body { padding: 0 !important; background: #fff !important; color: #000 !important; }
+            .navbar, .toolbar, .footer, #bloco-formulario-adicionar, .btn-acao-tabela { display: none !important; }
+            .card-custom { box-shadow: none !important; border: 0 !important; }
+            .card-header { display: none !important; }
+            #cabecalho-impressao-timbrado { display: block !important; border-bottom: 2px solid #198754; margin-bottom: 25px; padding-bottom: 10px; }
+            .table th { background: #f8f9fa !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
+            .text-success { color: #000 !important; }
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid px-2">
+        <div class="card card-custom border-0 mt-3">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 text-center">Formulário de Orçamentos</h3>
+            </div>
+            <div class="toolbar sticky-top bg-body pt-2 pb-2 mb-3 border-bottom" style="z-index:1020">
+                <div class="d-flex flex-wrap align-items-center gap-1">
+                    <button type="button" class="btn btn-sm btn-primary text-light" onclick="novoOrcamento()">➕ Novo</button>
+                    <button type="button" class="btn btn-sm btn-secondary text-light" onclick="salvarOrcamento(event)">💾 Salvar</button>
+                    <button type="button" class="btn btn-sm btn-secondary text-light" onclick="limparFormulario()">🧹 Limpar</button>
+                    <button type="button" class="btn btn-sm btn-warning fw-bold text-dark" onclick="baixarJSON()">⬇ JSON</button>
+                    <button type="button" class="btn btn-sm btn-success" onclick="exportarParaCSV()">📄 CSV</button>
+                    <button type="button" class="btn btn-sm btn-dark" onclick="window.print()">🖨️ Imprimir</button>
+                    <a href="/orcamentos" class="btn btn-sm btn-outline-success">📋 Tabela</a>
+                    <span class="badge text-bg-secondary p-2">Total de orçamentos: <strong><%= totalOrcamentos %></strong></span>
+                    <div class="input-group input-group-sm ms-md-auto" style="max-width:380px">
+                        <input id="inputOrcamentoNav" class="form-control" placeholder="Pesquisar orçamento por cliente">
+                        <button type="button" class="btn btn-outline-success" onclick="pesquisarOrcamento(event)">🔍</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-danger" role="alert"><%= mensagem %></div><% } %>
+                <div id="cabecalho-impressao-timbrado" class="text-center">
+                    <h2 class="fw-bold text-success mb-1">FULLTIME TECHNOLOGY</h2>
+                    <p class="text-muted small mb-2">Soluções Corporativas em Tecnologia &amp; Sistema PDV</p>
+                    <h4 class="fw-semibold border-top border-bottom py-1 text-uppercase text-secondary">Relatório Comercial de Orçamento</h4>
+                </div>
+
+                <form id="formOrcamento" data-edit-id="<%= orcamento.id || '' %>" onsubmit="salvarOrcamento(event); return false;" autocomplete="off">
+                    <section class="mb-4">
+                        <h5 class="titulo-secao">Dados Gerais do Cliente</h5>
+                        <div class="row">
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label" for="orcamentoIdDisplay">ID Orçamento</label>
+                                <input type="text" id="orcamentoIdDisplay" class="form-control bg-body-secondary text-muted" value="<%= orcamento.id || '(auto)' %>" disabled>
+                            </div>
+                            <div class="col-md-10 mb-3">
+                                <label class="form-label" for="cliente">Cliente</label>
+                                <input type="text" id="cliente" class="form-control" maxlength="255" value="<%= orcamento.cliente || '' %>" placeholder="Nome completo do cliente solicitante" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h5 class="titulo-secao">Itens / Serviços do Orçamento</h5>
+                        <div id="bloco-formulario-adicionar" class="row g-2 align-items-end p-3 rounded mb-3 bg-body-secondary border">
+                            <div class="col-md-2 col-12">
+                                <button type="button" class="btn btn-sm btn-success w-100 fw-bold" onclick="adicionarItemNaGrade()">➕ Adicionar Item</button>
+                            </div>
+                            <div class="col-md-6 col-12">
+                                <label class="form-label small mb-1" for="itemDescricao">Descrição do Serviço / Item</label>
+                                <input type="text" id="itemDescricao" class="form-control form-control-sm" maxlength="1000" placeholder="Ex.: Formatação de PC, instalação de câmeras">
+                            </div>
+                            <div class="col-md-2 col-6">
+                                <label class="form-label small mb-1" for="itemQuantidade">Quantidade</label>
+                                <input type="number" id="itemQuantidade" class="form-control form-control-sm" value="1" min="1" max="1000000" step="1">
+                            </div>
+                            <div class="col-md-2 col-6">
+                                <label class="form-label small mb-1" for="itemValorUnitario">Preço Unitário (R$)</label>
+                                <input type="number" id="itemValorUnitario" class="form-control form-control-sm" min="0.01" step="0.01" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="table-responsive rounded border mb-3">
+                            <table class="table table-hover table-striped align-middle mb-0" style="font-size:.9rem">
+                                <thead class="table-success text-uppercase" style="font-size:.78rem;letter-spacing:.5px">
+                                    <tr>
+                                        <th>#</th><th>Descrição do Item / Serviço</th>
+                                        <th class="text-center">Quantidade</th><th class="text-end">Preço Unitário</th>
+                                        <th class="text-end">Subtotal</th><th class="text-center btn-acao-tabela">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="corpoTabelaItens"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end align-items-center gap-3 p-3 rounded border bg-body-secondary">
+                            <span class="fw-bold text-body">VALOR TOTAL GERAL:</span>
+                            <div class="input-group" style="max-width:220px">
+                                <span class="input-group-text bg-success text-white fw-bold">R$</span>
+                                <input type="text" id="valorTotalGeralDisplay" class="form-control text-end bg-body text-success fw-bold" value="0,00" disabled>
+                            </div>
+                        </div>
+                    </section>
+                </form>
+            </div>
+        </div>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script type="application/json" id="orcamentoInicial"><%- JSON.stringify(orcamento).replace(/</g, '\\u003c') %></script>
+    <script>
+        const orcamentoInicial = JSON.parse(document.getElementById('orcamentoInicial').textContent);
+        const formOrcamento = document.getElementById('formOrcamento');
+        let itensOrcamento = Array.isArray(orcamentoInicial.itens) ? orcamentoInicial.itens.map(item => ({ ...item })) : [];
+        let formularioAlterado = false;
+
+        function escaparHTML(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[caractere]);
+        }
+
+        function formatarValor(valor) {
+            return Number(valor).toFixed(2).replace('.', ',');
+        }
+
+        function atualizarGradeInterface() {
+            const tbody = document.getElementById('corpoTabelaItens');
+            const totalDisplay = document.getElementById('valorTotalGeralDisplay');
+            if (itensOrcamento.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Nenhum item adicionado a este orçamento.</td></tr>';
+                totalDisplay.value = '0,00';
+                return;
+            }
+
+            let totalCentavos = 0;
+            tbody.innerHTML = itensOrcamento.map((item, index) => {
+                const subtotalCentavos = Math.round(Number(item.quantidade) * Math.round(Number(item.valorUnitario) * 100));
+                totalCentavos += subtotalCentavos;
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td class="text-start fw-medium">${escaparHTML(item.descricao)}</td>
+                        <td class="text-center">${Number(item.quantidade)}</td>
+                        <td class="text-end">R$ ${formatarValor(item.valorUnitario)}</td>
+                        <td class="text-end fw-bold text-success">R$ ${formatarValor(subtotalCentavos / 100)}</td>
+                        <td class="text-center btn-acao-tabela">
+                            <button type="button" class="btn btn-sm text-danger border-0 p-0 fw-bold" onclick="removerItemDaGrade(${index})" aria-label="Remover item ${index + 1}">✕</button>
+                        </td>
+                    </tr>`;
+            }).join('');
+            totalDisplay.value = formatarValor(totalCentavos / 100);
+        }
+
+        function adicionarItemNaGrade() {
+            const descricaoEl = document.getElementById('itemDescricao');
+            const quantidadeEl = document.getElementById('itemQuantidade');
+            const valorEl = document.getElementById('itemValorUnitario');
+            const descricao = descricaoEl.value.trim();
+            const quantidade = Number(quantidadeEl.value);
+            const valorUnitario = Number(valorEl.value);
+            if (!descricao) { alert('Informe a descrição do item ou serviço.'); descricaoEl.focus(); return; }
+            if (!Number.isSafeInteger(quantidade) || quantidade < 1) { alert('A quantidade deve ser um número inteiro maior que zero.'); quantidadeEl.focus(); return; }
+            if (!Number.isFinite(valorUnitario) || valorUnitario <= 0) { alert('Informe um preço unitário válido.'); valorEl.focus(); return; }
+
+            itensOrcamento.push({ descricao, quantidade, valorUnitario: Number(valorUnitario.toFixed(2)) });
+            descricaoEl.value = '';
+            quantidadeEl.value = '1';
+            valorEl.value = '';
+            formularioAlterado = true;
+            atualizarGradeInterface();
+            descricaoEl.focus();
+        }
+
+        function removerItemDaGrade(indice) {
+            itensOrcamento.splice(indice, 1);
+            formularioAlterado = true;
+            atualizarGradeInterface();
+        }
+
+        function limparFormulario() {
+            if (formularioAlterado && !confirm('Descartar as alterações atuais?')) return;
+            formOrcamento.dataset.editId = '';
+            document.getElementById('orcamentoIdDisplay').value = '(auto)';
+            document.getElementById('cliente').value = '';
+            document.getElementById('itemDescricao').value = '';
+            document.getElementById('itemQuantidade').value = '1';
+            document.getElementById('itemValorUnitario').value = '';
+            itensOrcamento = [];
+            formularioAlterado = false;
+            atualizarGradeInterface();
+            document.getElementById('cliente').focus();
+        }
+
+        function novoOrcamento() {
+            if (formularioAlterado && !confirm('Descartar as alterações atuais e iniciar um novo orçamento?')) return;
+            window.location.href = '/orcamentos/novo';
+        }
+
+        function voltarTabela() {
+            if (formularioAlterado && !confirm('Há alterações não salvas. Deseja sair mesmo assim?')) return;
+            formularioAlterado = false;
+            window.location.href = '/orcamentos';
+        }
+
+        async function salvarOrcamento(event) {
+            if (event) event.preventDefault();
+            const cliente = document.getElementById('cliente').value.trim();
+            if (!cliente) { alert('Informe o cliente do orçamento.'); document.getElementById('cliente').focus(); return; }
+            if (itensOrcamento.length === 0) { alert('Adicione ao menos um item ao orçamento antes de salvar.'); return; }
+            if (!confirm('Deseja salvar este orçamento?')) return;
+
+            const editId = formOrcamento.dataset.editId;
+            const destino = editId ? `/orcamentos/${encodeURIComponent(editId)}` : '/orcamentos';
+            try {
+                formularioAlterado = false;
+                const resposta = await fetch(destino, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ cliente, itens: itensOrcamento })
+                });
+                if (resposta.redirected) { window.location.href = '/'; return; }
+                const resultado = await resposta.json();
+                if (!resposta.ok) throw new Error(resultado.erro || 'Não foi possível salvar o orçamento.');
+                window.location.href = resultado.redirect;
+            } catch (erro) {
+                formularioAlterado = true;
+                alert(erro.message);
+            }
+        }
+
+        function baixarJSON() { window.location.href = '/orcamentos/exportar.json'; }
+        function exportarParaCSV() { window.location.href = '/orcamentos/exportar.csv'; }
+
+        async function pesquisarOrcamento(event) {
+            if (event) event.preventDefault();
+            const termo = document.getElementById('inputOrcamentoNav').value.trim();
+            if (!termo) { alert('Digite o nome do cliente para pesquisar.'); return; }
+            try {
+                const resposta = await fetch(`/api/orcamentos?q=${encodeURIComponent(termo)}`);
+                if (resposta.redirected) { window.location.href = '/'; return; }
+                if (!resposta.ok) throw new Error('Não foi possível pesquisar os orçamentos.');
+                const resultados = await resposta.json();
+                if (resultados.length === 0) { alert('Nenhum orçamento encontrado para o cliente informado.'); return; }
+                window.location.href = `/orcamentos/${encodeURIComponent(resultados[0].id)}/editar`;
+            } catch (erro) {
+                alert(erro.message);
+            }
+        }
+
+        formOrcamento.querySelector('#cliente').addEventListener('input', () => { formularioAlterado = true; });
+        document.getElementById('itemDescricao').addEventListener('input', () => { formularioAlterado = true; });
+        document.getElementById('itemQuantidade').addEventListener('input', () => { formularioAlterado = true; });
+        document.getElementById('itemValorUnitario').addEventListener('input', () => { formularioAlterado = true; });
+        document.addEventListener('DOMContentLoaded', () => {
+            atualizarGradeInterface();
+            document.getElementById('cliente').focus();
+        });
+        window.addEventListener('beforeunload', event => {
+            if (formularioAlterado) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>

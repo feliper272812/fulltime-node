@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edições - Constantino News</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .edicoes-table th, .edicoes-table td { vertical-align: middle; }
+        .edicoes-table .action-cell { min-width: 290px; padding-right: 1.25rem !important; }
+        .titulo-edicao { min-width: 220px; max-width: 420px; }
+        .btn-xs { padding: 1px 5px; font-size: .72rem; border-radius: 3px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid px-2">
+        <div class="card card-custom border-0 mt-3">
+            <div class="card-header bg-success text-white">
+                <h1 class="h4 mb-0 text-center">Edições do Constantino News</h1>
+            </div>
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-info" role="status"><%= mensagem %></div><% } %>
+                <p class="text-body-secondary small">
+                    As edições e matérias são armazenadas no MySQL. Só pode haver uma edição em andamento por vez.
+                </p>
+
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <button type="button" class="btn btn-sm btn-success" id="btnNovaEdicao">🆕 Nova edição</button>
+                    <a href="/edicoes/exportar.json" class="btn btn-sm btn-outline-secondary">⬇ Exportar JSON</a>
+                    <span class="badge text-bg-secondary">Edições: <strong><%= edicoes.length %></strong></span>
+                    <form class="input-group input-group-sm ms-md-auto" action="/edicoes" method="get" style="max-width: 470px">
+                        <select name="status" class="form-select" aria-label="Filtrar por status" style="max-width: 140px">
+                            <option value="">Todos os status</option>
+                            <% STATUS_EDICOES.forEach(item => { %>
+                                <option value="<%= item %>" <%= filtroStatus === item ? 'selected' : '' %>><%= item %></option>
+                            <% }) %>
+                        </select>
+                        <input name="q" class="form-control" type="search" placeholder="Título, nº, data ou responsável" value="<%= busca %>" aria-label="Pesquisar edições">
+                        <button class="btn btn-outline-success" type="submit">🔍</button>
+                    </form>
+                </div>
+
+                <% if (!edicoes.length) { %>
+                    <div class="alert alert-info mb-0">
+                        Nenhuma edição encontrada. <a href="#" id="linkCriarPrimeira">Criar uma edição</a>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-hover table-sm align-middle mb-0 edicoes-table" style="font-size:.9rem">
+                            <thead class="table-dark text-uppercase" style="font-size:.78rem;letter-spacing:.3px">
+                                <tr>
+                                    <th class="text-center">Nº</th>
+                                    <th>Data</th>
+                                    <th>Título / observação</th>
+                                    <th>Status</th>
+                                    <th>Matérias</th>
+                                    <th>Responsável</th>
+                                    <th>Atualizada em</th>
+                                    <th>Fechada em</th>
+                                    <th>Arquivo</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% edicoes.forEach(edicao => { const fechada = edicao.status === 'Fechada'; %>
+                                    <tr>
+                                        <td class="text-center fw-bold"><%= edicao.numero %></td>
+                                        <td class="text-nowrap"><%= formatarDataBR(edicao.data) %></td>
+                                        <td class="titulo-edicao">
+                                            <div class="fw-semibold"><%= edicao.titulo %></div>
+                                            <% if (edicao.observacao) { %><div class="small text-body-secondary"><%= edicao.observacao %></div><% } %>
+                                        </td>
+                                        <td><span class="badge <%= fechada ? 'text-bg-success' : 'text-bg-warning' %>"><%= edicao.status %></span></td>
+                                        <td class="text-nowrap">
+                                            <% if (!edicao.totalMaterias) { %>
+                                                <span class="text-body-secondary">Sem matérias</span>
+                                            <% } else { %>
+                                                <div><strong><%= edicao.materiasAtivas %></strong> ativa(s)<% if (edicao.materiasInativas) { %> · <%= edicao.materiasInativas %> inativa(s)<% } %></div>
+                                                <div class="small text-body-secondary">C1: <%= edicao.porColuna[0] %> · C2: <%= edicao.porColuna[1] %> · C3: <%= edicao.porColuna[2] %></div>
+                                            <% } %>
+                                        </td>
+                                        <td><%= edicao.responsavel %></td>
+                                        <td class="text-nowrap small"><%= formatarDataHoraBR(edicao.atualizadoEm) %></td>
+                                        <td class="text-nowrap small"><%= fechada ? formatarDataHoraBR(edicao.fechadaEm) : '' %></td>
+                                        <td><code class="small"><%= edicao.arquivo %></code></td>
+                                        <td class="text-end text-nowrap action-cell">
+                                            <a class="btn btn-xs btn-outline-primary" href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias"><%= fechada ? 'Ver grade' : 'Grade' %></a>
+                                            <% if (!fechada) { %>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary" data-edicao-editar
+                                                    data-id="<%= edicao.id %>" data-numero="<%= edicao.numero %>"
+                                                    data-data="<%= edicao.data %>" data-titulo="<%= edicao.titulo %>"
+                                                    data-responsavel="<%= edicao.responsavel %>" data-observacao="<%= edicao.observacao %>">Dados</button>
+                                                <form class="d-inline" method="post" action="/edicoes/<%= encodeURIComponent(edicao.id) %>/status"
+                                                    data-fechar-edicao data-tem-manchete="<%= edicao.temManchete %>"
+                                                    data-coluna-1="<%= edicao.porColuna[0] %>" data-coluna-2="<%= edicao.porColuna[1] %>"
+                                                    data-coluna-3="<%= edicao.porColuna[2] %>">
+                                                    <input type="hidden" name="status" value="Fechada">
+                                                    <button class="btn btn-xs btn-outline-warning" type="submit">Fechar</button>
+                                                </form>
+                                                <form class="d-inline" method="post" action="/edicoes/<%= encodeURIComponent(edicao.id) %>/excluir"
+                                                    onsubmit="return confirm('Excluir esta edição e todas as suas matérias?');">
+                                                    <button class="btn btn-xs btn-outline-danger" type="submit">Excluir</button>
+                                                </form>
+                                            <% } else { %>
+                                                <a class="btn btn-xs btn-outline-secondary" href="/edicoes/<%= encodeURIComponent(edicao.id) %>/exportar.json">JSON</a>
+                                                <form class="d-inline" method="post" action="/edicoes/<%= encodeURIComponent(edicao.id) %>/status"
+                                                    onsubmit="return confirm('Reabrir esta edição para alterações?');">
+                                                    <input type="hidden" name="status" value="Editando">
+                                                    <button class="btn btn-xs btn-outline-warning" type="submit">Reabrir</button>
+                                                </form>
+                                                <button class="btn btn-xs btn-outline-danger" type="button" disabled title="Reabra a edição antes de excluir">Excluir</button>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade" id="modalEdicao" tabindex="-1" aria-labelledby="tituloModalEdicao" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="formEdicao" method="post" action="/edicoes">
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5 text-success" id="tituloModalEdicao">Nova edição</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <% if (erroFormulario) { %><div class="alert alert-danger py-2"><%= erroFormulario %></div><% } %>
+                        <input type="hidden" name="id" id="edId" value="<%= edicaoForm.id || '' %>">
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <label for="edNumero" class="form-label">Nº *</label>
+                                <input type="number" min="1" step="1" required class="form-control" name="numero" id="edNumero" value="<%= edicaoForm.numero || '' %>">
+                            </div>
+                            <div class="col-8">
+                                <label for="edData" class="form-label">Data *</label>
+                                <input type="date" required class="form-control" name="data" id="edData" value="<%= edicaoForm.data || '' %>">
+                            </div>
+                            <div class="col-12">
+                                <label for="edTitulo" class="form-label">Título</label>
+                                <input type="text" maxlength="120" class="form-control" name="titulo" id="edTitulo" value="<%= edicaoForm.titulo || '' %>">
+                                <div class="form-text">Se ficar em branco, será usado o título padrão pela data.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="edResponsavel" class="form-label">Responsável</label>
+                                <input type="text" maxlength="120" class="form-control" name="responsavel" id="edResponsavel" value="<%= edicaoForm.responsavel || '' %>">
+                            </div>
+                            <div class="col-12">
+                                <label for="edObservacao" class="form-label">Observação</label>
+                                <textarea maxlength="400" class="form-control" name="observacao" id="edObservacao" rows="2"><%= edicaoForm.observacao || '' %></textarea>
+                            </div>
+                            <div class="col-12 form-text">Arquivo previsto: <code id="edArquivo"></code></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">💾 Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const modalEdicao = document.getElementById('modalEdicao');
+        const formEdicao = document.getElementById('formEdicao');
+        const campoEdId = document.getElementById('edId');
+        const campoNumero = document.getElementById('edNumero');
+        const campoData = document.getElementById('edData');
+        const campoTitulo = document.getElementById('edTitulo');
+        const campoResponsavel = document.getElementById('edResponsavel');
+        const campoObservacao = document.getElementById('edObservacao');
+        const maxNumero = <%= Math.max(0, ...edicoes.map(edicao => edicao.numero)) + 1 %>;
+
+        function atualizarNomeArquivo() {
+            const data = campoData.value;
+            const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data);
+            document.getElementById('edArquivo').textContent = partes
+                ? `edicao-${partes[3]}${partes[2]}${partes[1]}.html`
+                : '—';
+        }
+
+        function abrirNovaEdicao(event) {
+            if (event) event.preventDefault();
+            formEdicao.action = '/edicoes';
+            campoEdId.value = '';
+            campoNumero.value = maxNumero;
+            campoData.value = new Date().toISOString().slice(0, 10);
+            campoTitulo.value = '';
+            campoResponsavel.value = '';
+            campoObservacao.value = '';
+            document.getElementById('tituloModalEdicao').textContent = 'Nova edição';
+            atualizarNomeArquivo();
+            bootstrap.Modal.getOrCreateInstance(modalEdicao).show();
+        }
+
+        document.getElementById('btnNovaEdicao').addEventListener('click', abrirNovaEdicao);
+        const linkCriarPrimeira = document.getElementById('linkCriarPrimeira');
+        if (linkCriarPrimeira) linkCriarPrimeira.addEventListener('click', abrirNovaEdicao);
+        document.querySelectorAll('[data-edicao-editar]').forEach(botao => {
+            botao.addEventListener('click', () => {
+                campoEdId.value = botao.dataset.id;
+                campoNumero.value = botao.dataset.numero;
+                campoData.value = botao.dataset.data;
+                campoTitulo.value = botao.dataset.titulo;
+                campoResponsavel.value = botao.dataset.responsavel;
+                campoObservacao.value = botao.dataset.observacao;
+                formEdicao.action = `/edicoes/${encodeURIComponent(botao.dataset.id)}`;
+                document.getElementById('tituloModalEdicao').textContent = 'Dados da edição';
+                atualizarNomeArquivo();
+                bootstrap.Modal.getOrCreateInstance(modalEdicao).show();
+            });
+        });
+        document.querySelectorAll('[data-fechar-edicao]').forEach(form => {
+            form.addEventListener('submit', event => {
+                const avisos = [];
+                if (form.dataset.temManchete !== 'true') avisos.push('Nenhuma manchete principal ativa.');
+                [1, 2, 3].forEach(coluna => {
+                    if (Number(form.getAttribute(`data-coluna-${coluna}`)) === 0) avisos.push(`Coluna ${coluna} sem matérias ativas.`);
+                });
+                const mensagem = 'Fechar esta edição? Ela precisa ter ao menos uma matéria ativa.' +
+                    (avisos.length ? `\n\nAtenção:\n- ${avisos.join('\n- ')}` : '');
+                if (!window.confirm(mensagem)) event.preventDefault();
+            });
+        });
+        campoData.addEventListener('input', atualizarNomeArquivo);
+        atualizarNomeArquivo();
+        <% if (abrirModal) { %>
+            bootstrap.Modal.getOrCreateInstance(modalEdicao).show();
+        <% } %>
+    </script>
+</body>
+</html>

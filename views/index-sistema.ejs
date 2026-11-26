@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sistema | FullTime Technology</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body { min-height: 100%; }
+        body { min-height: 100vh; padding: 56px 0 42px; overflow-x: hidden; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121212; }
+        .system-stage { min-height: calc(100vh - 98px); display: flex; align-items: center; justify-content: center; }
+        .coin-container { display: flex; justify-content: center; align-items: center; perspective: 1200px; }
+        .coin { width: min(80vw, 430px); aspect-ratio: 1; transform-style: preserve-3d; animation: girarMoeda 12s linear infinite; filter: drop-shadow(0 10px 15px rgba(0,0,0,.25)); }
+        .coin img { display: block; width: 100%; height: 100%; object-fit: contain; }
+        @keyframes girarMoeda { 0% { transform: rotateY(0deg); } 50% { transform: rotateY(180deg); } 100% { transform: rotateY(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .coin { animation: none; } }
+    </style>
+</head>
+<body class="d-flex flex-column">
+    <%- include('partials/nav-sistema') %>
+    <main class="container-fluid system-stage">
+        <section class="text-center" aria-labelledby="tituloSistema">
+            <h1 id="tituloSistema" class="visually-hidden">FullTime Technology</h1>
+            <div class="coin-container">
+                <div class="coin">
+                    <img src="/images/Logotipos/logob-1-transparente.png" alt="Logo FullTime Technology">
+                </div>
+            </div>
+            <p class="lead text-success-emphasis fw-semibold mt-3 mb-0">
+                Bem-vindo<% if (usuarioLogado) { %>, <%= usuarioLogado.usuario %><% } %>
+            </p>
+        </section>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

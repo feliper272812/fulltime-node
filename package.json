@@ -7,6 +7,12 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "migrate:users-json": "node scripts/migrate-users-json.js",
+    "migrate:clientes-pj-json": "node scripts/import-clientes-pj-json.js",
+    "migrate:fornecedores-json": "node scripts/import-fornecedores-json.js",
+    "migrate:produtos-json": "node scripts/import-produtos-json.js",
+    "migrate:orcamentos-json": "node scripts/import-orcamentos-json.js",
+    "migrate:ordens-servico-json": "node scripts/import-ordens-servico-json.js",
+    "migrate:news-json": "node scripts/import-news-json.js",
     "test": "node --test"
   },
   "keywords": [],

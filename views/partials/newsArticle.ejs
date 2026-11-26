@@ -1,0 +1,58 @@
+<%
+const link = String(materia.link || '#').trim();
+const linkSeguro = /^(javascript|data|vbscript):/i.test(link) ? '#' : link;
+const margem = ultimo ? '' : ' mb-4';
+const imagem = materia.imagem || '';
+%>
+<% if (materia.tipo === 'manchete') { %>
+    <div>
+        <p class="article-label" style="border-bottom: 2px solid var(--accent); padding-bottom: 0.3rem; display:inline-block;">Manchete Principal</p>
+        <h2 class="featured-headline"><a href="<%= linkSeguro %>"><%= materia.titulo %></a></h2>
+        <% if (imagem) { %><img class="featured-img mt-2" src="<%= imagem %>" alt="<%= materia.titulo %>"><% } %>
+        <% if (materia.legenda) { %><p class="img-caption"><%= materia.legenda %></p><% } %>
+        <% if (materia.resumo) { %><p style="font-size:1rem; line-height:1.7; color:var(--ink); margin-bottom:.75rem; text-align:justify; white-space:pre-line; overflow-wrap:break-word; word-break:break-word;"><%= materia.resumo %></p><% } %>
+        <% if (materia.autor || materia.tempo) { %>
+            <p class="article-byline"><% if (materia.autor) { %>Por <strong><%= materia.autor %></strong><% } %><% if (materia.autor && materia.tempo) { %> · <% } %><% if (materia.tempo) { %><%= materia.tempo %><% } %></p>
+        <% } %>
+    </div>
+    <% if (!ultimo) { %><hr style="border-color:var(--rule); margin:1.5rem 0;"><% } %>
+<% } else if (materia.tipo === 'foto-esquerda') { %>
+    <div class="article-photo-left<%= margem %>"<%= primeiro ? ' style="border-top:none; padding-top:0;"' : '' %>>
+        <% if (materia.categoria) { %><p class="article-label"><%= materia.categoria %></p><% } %>
+        <% if (imagem) { %><div class="photo-thumb"><img src="<%= imagem %>" alt="<%= materia.titulo %>"></div><% } %>
+        <div class="photo-text">
+            <h2 class="article-headline"><a href="<%= linkSeguro %>"><%= materia.titulo %></a></h2>
+            <% if (materia.resumo) { %><p class="article-deck" style="font-size:.85rem; white-space:pre-line;"><%= materia.resumo %></p><% } %>
+            <% if (materia.autor || materia.tempo) { %>
+                <p class="article-byline"><% if (materia.autor) { %>Por <strong><%= materia.autor %></strong><% } %><% if (materia.autor && materia.tempo) { %> · <% } %><% if (materia.tempo) { %><%= materia.tempo %><% } %></p>
+            <% } %>
+        </div>
+    </div>
+<% } else if (materia.tipo === 'imagem-grande') { %>
+    <div class="<%= margem.trim() %>">
+        <% if (materia.categoria) { %><p class="article-label"><%= materia.categoria %></p><% } %>
+        <h2 class="article-headline"><a href="<%= linkSeguro %>"><%= materia.titulo %></a></h2>
+        <% if (imagem) { %><img class="img-story" src="<%= imagem %>" alt="<%= materia.titulo %>"><% } %>
+        <% if (materia.legenda) { %><p class="img-caption"><%= materia.legenda %></p><% } %>
+        <% if (materia.resumo) { %><p class="article-deck" style="white-space:pre-line;"><%= materia.resumo %></p><% } %>
+        <% if (materia.autor || materia.tempo) { %>
+            <p class="article-byline"><% if (materia.autor) { %>Por <strong><%= materia.autor %></strong><% } %><% if (materia.autor && materia.tempo) { %> · <% } %><% if (materia.tempo) { %><%= materia.tempo %><% } %></p>
+        <% } %>
+    </div>
+<% } else if (materia.tipo === 'opiniao') { %>
+    <div class="<%= margem.trim() %>" style="background:#fff; border:.5px solid var(--rule); border-left:4px solid var(--accent); padding:1rem 1rem 1rem 1.25rem; border-radius:0 4px 4px 0;">
+        <p class="article-label" style="margin-bottom:.25rem;"><%= materia.categoria || 'Opinião' %></p>
+        <h2 class="article-headline" style="font-size:1rem; margin-bottom:.4rem;"><a href="<%= linkSeguro %>"><%= materia.titulo %></a></h2>
+        <% if (materia.resumo) { %><p class="article-deck" style="font-size:.85rem; white-space:pre-line;"><%= materia.resumo %></p><% } %>
+        <% if (materia.autor) { %><p style="font-size:.82rem; font-style:italic; color:var(--muted); margin:0;">Por <strong><%= materia.autor %></strong>, colunista</p><% } %>
+    </div>
+<% } else { %>
+    <div class="<%= margem.trim() %>"<%= primeiro ? '' : ' style="border-top:1px solid var(--rule); padding-top:1rem;"' %>>
+        <% if (materia.categoria) { %><p class="article-label"><%= materia.categoria %></p><% } %>
+        <h2 class="article-headline" style="font-size:1.05rem;"><a href="<%= linkSeguro %>"><%= materia.titulo %></a></h2>
+        <% if (materia.resumo) { %><p class="article-deck" style="font-size:.85rem; white-space:pre-line;"><%= materia.resumo %></p><% } %>
+        <% if (materia.autor || materia.tempo) { %>
+            <p class="article-byline"><% if (materia.autor) { %>Por <strong><%= materia.autor %></strong><% } %><% if (materia.autor && materia.tempo) { %> · <% } %><% if (materia.tempo) { %><%= materia.tempo %><% } %></p>
+        <% } %>
+    </div>
+<% } %>

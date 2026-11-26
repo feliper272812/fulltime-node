@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= materia.id ? 'Editar matéria' : 'Cadastrar matéria' %> - Constantino News</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .form-label { font-weight: 600; }
+        #previewImg { max-height: 180px; max-width: 100%; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid px-2">
+        <div class="card card-custom border-0 mt-3">
+            <div class="card-header bg-success text-white">
+                <h1 class="h4 mb-0 text-center"><%= materia.id ? 'Editar matéria' : 'Cadastrar matéria' %></h1>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias" class="btn btn-sm btn-outline-success">📋 Grade de matérias</a>
+                    <a href="/edicoes" class="btn btn-sm btn-outline-secondary">📰 Edições</a>
+                    <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/exportar.json" class="btn btn-sm btn-outline-secondary">⬇ JSON da edição</a>
+                    <% if (!somenteLeitura) { %>
+                        <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias/nova" class="btn btn-sm btn-outline-success">🆕 Nova</a>
+                        <button type="submit" form="formMateria" class="btn btn-sm btn-success">💾 Salvar</button>
+                    <% } %>
+                    <span class="badge text-bg-secondary"><%= edicao.titulo %> · <%= formatarDataBR(edicao.data) %></span>
+                </div>
+
+                <% if (somenteLeitura) { %>
+                    <div class="alert alert-warning">Esta edição está fechada e somente pode ser consultada. Reabra-a na lista de edições para alterar matérias.</div>
+                <% } %>
+                <% if (erroFormulario) { %><div class="alert alert-danger" role="alert"><%= erroFormulario %></div><% } %>
+
+                <form method="post" action="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias" id="formMateria">
+                    <input type="hidden" name="id" value="<%= materia.id || '' %>">
+                    <fieldset <%= somenteLeitura ? 'disabled' : '' %>>
+                        <section class="card mb-3">
+                            <div class="card-header fw-semibold text-success">Posição na página</div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6 col-md-3">
+                                        <label for="coluna" class="form-label">Coluna *</label>
+                                        <select name="coluna" id="coluna" class="form-select" required>
+                                            <option value="">Selecione...</option>
+                                            <% [1, 2, 3].forEach(coluna => { %>
+                                                <option value="<%= coluna %>" <%= Number(materia.coluna) === coluna ? 'selected' : '' %>>Coluna <%= coluna %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <label for="ordem" class="form-label">Ordem</label>
+                                        <input type="number" min="1" step="1" name="ordem" id="ordem" class="form-control" value="<%= materia.ordem || 1 %>">
+                                        <div class="form-text">1 = topo da coluna.</div>
+                                    </div>
+                                    <div class="col-12 col-md-5">
+                                        <label for="tipo" class="form-label">Formato da matéria *</label>
+                                        <select name="tipo" id="tipo" class="form-select" required>
+                                            <option value="">Selecione...</option>
+                                            <% tiposMateria.forEach(tipo => {
+                                                const rotulos = {
+                                                    'foto-esquerda': 'Foto pequena à esquerda',
+                                                    'imagem-grande': 'Imagem grande com legenda',
+                                                    texto: 'Somente texto',
+                                                    manchete: 'Manchete principal',
+                                                    opiniao: 'Opinião (caixa)'
+                                                };
+                                            %>
+                                                <option value="<%= tipo %>" <%= materia.tipo === tipo ? 'selected' : '' %>><%= rotulos[tipo] || tipo %></option>
+                                            <% }) %>
+                                        </select>
+                                        <div id="ajudaTipo" class="form-text"></div>
+                                    </div>
+                                    <div class="col-12 col-md-2">
+                                        <label for="status" class="form-label">Status</label>
+                                        <select name="status" id="status" class="form-select">
+                                            <% statusMateria.forEach(status => { %><option value="<%= status %>" <%= materia.status === status ? 'selected' : '' %>><%= status %></option><% }) %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="card mb-3">
+                            <div class="card-header fw-semibold text-success">Conteúdo</div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-3">
+                                        <label for="categoria" class="form-label">Categoria</label>
+                                        <input type="text" name="categoria" id="categoria" class="form-control" list="listaCategorias" maxlength="40" value="<%= materia.categoria || '' %>" placeholder="Ex.: Política">
+                                        <datalist id="listaCategorias">
+                                            <% ['Brasil', 'Mundo', 'Política', 'Economia', 'Negócios', 'Esporte', 'Tecnologia', 'Saúde', 'Cultura', 'Opinião'].forEach(categoria => { %>
+                                                <option value="<%= categoria %>"></option>
+                                            <% }) %>
+                                        </datalist>
+                                    </div>
+                                    <div class="col-12 col-md-9">
+                                        <label for="titulo" class="form-label">Título *</label>
+                                        <input type="text" name="titulo" id="titulo" class="form-control" maxlength="200" required value="<%= materia.titulo || '' %>">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="link" class="form-label">Link da matéria</label>
+                                        <input type="text" name="link" id="link" class="form-control" maxlength="2000" value="<%= materia.link || '#' %>" placeholder="# ou endereço da página">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="resumo" class="form-label">Matéria</label>
+                                        <textarea name="resumo" id="resumo" class="form-control" rows="5" maxlength="5000"><%= materia.resumo || '' %></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="card mb-3">
+                            <div class="card-header fw-semibold text-success">Autoria e data</div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-8">
+                                        <label for="autor" class="form-label">Autor(es)</label>
+                                        <input type="text" name="autor" id="autor" class="form-control" maxlength="120" value="<%= materia.autor || '' %>" placeholder="Ex.: Ana Ferreira">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label for="tempo" class="form-label">Publicada</label>
+                                        <input type="text" name="tempo" id="tempo" class="form-control" maxlength="40" value="<%= materia.tempo || '' %>" placeholder="Ex.: 3h atrás">
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="card mb-3">
+                            <div class="card-header fw-semibold text-success">Imagem</div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-lg-8">
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label for="imagem" class="form-label">Caminho da imagem</label>
+                                                <input type="text" name="imagem" id="imagem" class="form-control" maxlength="16000000" value="<%= materia.imagem || '' %>" placeholder="Ex.: /imagens/materias/foto.jpg (ou só o nome do arquivo)">
+                                                <div class="form-text">O cadastro guarda o caminho. A seleção de arquivo não faz upload; copie a imagem para <code>public/images/Materias/</code>.</div>
+                                            </div>
+                                            <div class="col-12 col-md-8">
+                                                <label for="imagemArquivo" class="form-label">Escolher arquivo</label>
+                                                <input type="file" id="imagemArquivo" class="form-control" accept="image/*,.svg">
+                                                <div id="infoImagem" class="form-text"></div>
+                                            </div>
+                                            <div class="col-12 col-md-4 d-flex align-items-end">
+                                                <button type="button" id="btnRemoverImagem" class="btn btn-outline-danger w-100">Remover imagem</button>
+                                            </div>
+                                            <div class="col-12">
+                                                <label for="legenda" class="form-label">Legenda</label>
+                                                <input type="text" name="legenda" id="legenda" class="form-control" maxlength="200" value="<%= materia.legenda || '' %>" placeholder="Legenda da imagem">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-lg-4">
+                                        <div class="form-label">Pré-visualização</div>
+                                        <div class="border rounded p-2 text-center bg-body-tertiary">
+                                            <img id="previewImg" class="<%= materia.imagem ? '' : 'd-none' %>" src="<%= materia.imagem || '' %>" alt="Pré-visualização da imagem da matéria">
+                                            <span id="semImagem" class="text-body-secondary small <%= materia.imagem ? 'd-none' : '' %>">Nenhuma imagem selecionada</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </fieldset>
+                    <% if (!somenteLeitura) { %>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-success">💾 Salvar matéria</button>
+                            <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    <% } %>
+                </form>
+            </div>
+        </div>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const campoImagem = document.getElementById('imagem');
+        const previewImagem = document.getElementById('previewImg');
+        const semImagem = document.getElementById('semImagem');
+        const arquivoImagem = document.getElementById('imagemArquivo');
+        const infoImagem = document.getElementById('infoImagem');
+        const ajudaFormato = {
+            'foto-esquerda': 'Miniatura pequena à esquerda do título.',
+            'imagem-grande': 'Imagem na largura da coluna, com legenda.',
+            texto: 'Matéria sem imagem.',
+            manchete: 'Destaque principal da coluna central.',
+            opiniao: 'Caixa de opinião com identificação do colunista.'
+        };
+        let previewLocal = '';
+
+        function liberarPreviewLocal() {
+            if (previewLocal) URL.revokeObjectURL(previewLocal);
+            previewLocal = '';
+        }
+
+        function atualizarPreview() {
+            const caminho = campoImagem.value.trim();
+            if (previewImagem) {
+                if (caminho) {
+                    previewImagem.src = caminho;
+                    previewImagem.classList.remove('d-none');
+                    semImagem.classList.add('d-none');
+                } else {
+                    previewImagem.removeAttribute('src');
+                    previewImagem.classList.add('d-none');
+                    semImagem.textContent = 'Nenhuma imagem selecionada';
+                    semImagem.classList.remove('d-none');
+                }
+            }
+            infoImagem.textContent = caminho ? `Caminho salvo: ${caminho}` : '';
+        }
+
+        arquivoImagem.addEventListener('change', event => {
+            const arquivo = event.target.files && event.target.files[0];
+            if (!arquivo) return;
+            const ehImagem = (arquivo.type && arquivo.type.startsWith('image/')) || /\.svg$/i.test(arquivo.name);
+            if (!ehImagem) {
+                event.target.value = '';
+                infoImagem.textContent = 'O arquivo escolhido não é uma imagem.';
+                infoImagem.className = 'form-text text-danger';
+                return;
+            }
+            liberarPreviewLocal();
+            previewLocal = URL.createObjectURL(arquivo);
+            campoImagem.value = `/imagens/materias/${arquivo.name}`;
+            previewImagem.src = previewLocal;
+            previewImagem.classList.remove('d-none');
+            semImagem.classList.add('d-none');
+            infoImagem.className = 'form-text text-success';
+            infoImagem.textContent = `Caminho definido: ${campoImagem.value} — copie o arquivo para a pasta de imagens do site.`;
+        });
+
+        campoImagem.addEventListener('input', () => {
+            liberarPreviewLocal();
+            infoImagem.className = 'form-text';
+            atualizarPreview();
+        });
+        previewImagem.addEventListener('error', () => {
+            previewImagem.classList.add('d-none');
+            semImagem.textContent = 'Imagem não encontrada no caminho informado.';
+            semImagem.classList.remove('d-none');
+        });
+        document.getElementById('btnRemoverImagem').addEventListener('click', () => {
+            liberarPreviewLocal();
+            campoImagem.value = '';
+            arquivoImagem.value = '';
+            atualizarPreview();
+        });
+        document.getElementById('tipo').addEventListener('change', event => {
+            document.getElementById('ajudaTipo').textContent = ajudaFormato[event.target.value] || '';
+        });
+
+        document.getElementById('tipo').dispatchEvent(new Event('change'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!-- =========================================================
+ARQUIVO: frenteDeCaixa.ejs
+
+TELA DE FRENTE DE CAIXA PDV COM CORREÇÃO DE ALTURA (SEM CORTE)
+
+  Tecnologias:
+  - HTML5
+  - CSS3
+  - Bootstrap 5.3
+
+  Tema:
+  - Light
+  - Dark
+  - Auto
+
+Autor: Felipe Rodrigues - FullTime Technology
+========================================================= -->
+
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDV - Frente de Caixa</title>
+
+  <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- JAVASCRIPT DO PDV -->
+  <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+
+  <script src="/js/pdv.js"></script>
+
+  <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- SCRIPT OFICIAL DE TEMAS BOOTSTRAP 5.3 -->
+  <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+
+  <script src="/js/color-modes.js"></script>
+
+  <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Bootstrap CSS v5.3.8 -->
+  <!-- ////////////////////////////////////////////////////////////////////////////////// -->
+
+    <!-- BOOTSTRAP 5.3.3 CSS (CDN oficial) -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous"> -->
+
+    <!-- BOOTSTRAP 5.3.3 CSS LOCAL -->
+    <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet">
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let cssCarregado = false;
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    let sheet = document.styleSheets[i];
+                    if (sheet.href && sheet.href.indexOf("bootstrap.min.css") !== -1) {
+                        if (sheet.cssRules && sheet.cssRules.length > 0) {
+                            cssCarregado = true;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // Captura restrições de segurança de CORS se houverem
+                }
+            }
+
+            if (!cssCarregado) {
+                alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+                console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+                
+                let cdn = document.createElement("link");
+                cdn.rel = "stylesheet";
+                cdn.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css";
+                cdn.integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH";
+                cdn.crossOrigin = "anonymous";
+                document.head.appendChild(cdn);
+            }
+        });
+    </script>
+
+  <style>
+
+  /* /////////////////////////////////////////////////////////////////////////////////
+  /* FUNDO PADRÃO IGUAL CADPRODUTOS */
+  /* ////////////////////////////////////////////////////////////////////////////// */
+
+    html, body {
+      height: 100vh !important;
+      margin: 0;
+      overflow: hidden !important;
+    }
+    body {
+      background-color: #f5f7fb;
+      display: flex;
+      flex-direction: column;
+      padding-top: 56px;
+    }
+    [data-bs-theme="dark"] body {
+      background-color: #121212;
+    }
+    .pdv-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 105px) !important;
+      overflow: hidden !important;
+    }
+    .pdv-left {
+      width: 60%;
+      padding: 15px;
+      height: 100%;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+    }
+    .pdv-left .sticky-top {
+      position: static !important;
+      background-color: var(--bs-body-bg) !important;
+      padding: 10px !important;
+      margin-top: -15px !important;
+      margin-left: -15px !important;
+      margin-right: -15px !important;
+      margin-bottom: 15px !important;
+      border-bottom: 1px solid var(--bs-border-color) !important;
+      flex-shrink: 0 !important;
+    }
+    #listaProdutos {
+      flex: 1 !important;
+      overflow-y: auto !important;
+      padding-right: 5px !important;
+    }
+    .pdv-right {
+      width: 40%;
+      border-left: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      height: 100%;
+    }
+
+    .produto-card {
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .produto-card:hover {
+      transform: scale(1.02);
+    }
+
+    .total-box {
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    /* ////////////////////////////////////////////////////////////////////////////////*/
+
+
+    /* ////////////////////////////////////////////////////////////////////////////////*/ 
+    /* CONTROLE DE TEMA EMBUTIDO NA NAVBAR */
+    /* ////////////////////////////////////////////////////////////////////////////////*/
+
+    .bd-mode-toggle .bi {
+      width: 1em;
+      height: 1em;
+      fill: currentColor;
+    }
+    .bd-mode-toggle .dropdown-menu .active .bi {
+      display: block !important;
+    }
+    /* ============================================== ESTILOS DAS LINHAS DO CARRINHO (COMPACTO) ============================================== */
+    .carrinho-linha {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .carrinho-nome {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 45%;
+    }
+    .carrinho-pontos {
+      flex-grow: 1;
+      border-bottom: 2px dotted var(--bs-border-color);
+      margin: 0 8px;
+      position: relative;
+      top: 4px;
+    }
+    .carrinho-valores {
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    /* ////////////////////////////////////////////////////////////////////////////////*/
+    /* ESTILOS EXCLUSIVOS PARA IMPRESSÃO DO CUPOM */
+    /* ////////////////////////////////////////////////////////////////////////////////*/
+
+    #area-impressao-cupom {
+      display: none;
+    }
+    @media print {
+      body * {
+        display: none !important;
+      }
+      #area-impressao-cupom, #area-impressao-cupom * {
+        display: block !important;
+      }
+      #area-impressao-cupom {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px;
+        color: #000 !important;
+        background: #fff !important;
+        padding: 10px;
+      }
+      .cupom-tracejado {
+        border-top: 1px dashed #000 !important;
+        margin: 5px 0;
+      }
+      .cupom-item-linha {
+        display: flex;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ////////////////////////////////////////// -->
+  <!-- AREA OCULTA PARA EMISSÃO DO CUPOM IMPRESSO -->
+  <!-- ////////////////////////////////////////// -->
+
+  <div id="area-impressao-cupom"></div>
+
+  <!-- ////////////////////////////////////////////////////////////////// -->
+  <!-- MODAL DE ESCANEAMENTO DE CÓDIGO DE BARRAS (CÂMERA + ARQUIVO LOCAL) -->
+  <!-- ////////////////////////////////////////////////////////////////// -->
+
+  <div class="modal fade" id="modalScanner" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header pb-2">
+          <h5 class="modal-title">📷 Escanear Produto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body pt-2">
+
+          <!-- /////////////////////////////////////////////////////////// -->
+          <!-- ABAS DE NAVEGAÇÃO -->
+          <!-- /////////////////////////////////////////////////////////// -->
+
+          <ul class="nav nav-tabs mb-3" id="scannerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="camera-tab" data-bs-toggle="tab" data-bs-target="#aba-camera" type="button" role="tab" aria-controls="aba-camera" aria-selected="true">
+                🎥 Via Câmera
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="arquivo-tab" data-bs-toggle="tab" data-bs-target="#aba-arquivo" type="button" role="tab" aria-controls="aba-arquivo" aria-selected="false">
+                📁 Upload de Imagem
+              </button>
+            </li>
+          </ul>
+
+          <!-- /////////////////////////////////////////////////////////// -->
+          <!-- CONTEÚDO DAS ABAS -->
+          <!-- /////////////////////////////////////////////////////////// -->
+
+          <div class="tab-content" id="scannerTabsContent">
+
+            <!-- /////////////////////////////////////////////////////////// -->
+            <!-- ABA 1: CÂMERA -->
+            <!-- /////////////////////////////////////////////////////////// -->
+
+            <div class="tab-pane fade show active" id="aba-camera" role="tabpanel" aria-labelledby="camera-tab">
+              <div id="leitor-camera" style="width: 100%;"></div>
+              <p class="text-muted small mt-2 mb-0 text-center">Aponte a câmera para o código de barras.</p>
+            </div>
+            
+            <!-- /////////////////////////////////////////////////////////// -->
+            <!-- ABA 2: ARQUIVO LOCAL -->
+            <!-- /////////////////////////////////////////////////////////// -->
+
+            <div class="tab-pane fade" id="aba-arquivo" role="tabpanel" aria-labelledby="arquivo-tab">
+              <div class="card p-3 text-center border-dashed">
+                <label for="leitor-arquivo-input" class="form-label fw-bold text-success mb-2">Selecione ou tire uma foto do código</label>
+                <input class="form-control" type="file" id="leitor-arquivo-input" accept="image/*">
+                <div id="feedback-arquivo" class="small text-muted mt-2">Formatos aceitos: JPG, PNG, WebP</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <header>
+
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+    <!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+    <%- include('partials/navbar') %>
+
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+  </header>
+
+  <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+  <div class="pdv-container">
+  <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+    <!-- ESQUERDA - CATÁLOGO DE PRODUTOS -->
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+    <div class="pdv-left">
+      <div class="sticky-top p-2 mb-2 bg-body" style="z-index: 1020; margin-top: -15px; margin-left: -15px; margin-right: -15px; padding-top: 15px !important; padding-bottom: 15px !important; padding-left: 15px !important; padding-right: 15px !important;">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <input type="text" inputmode="decimal" id="quant" class="form-control" style="border: 1px solid #198754 !important; box-shadow: none !important; width: 5rem !important;" placeholder="📋 Qtd" oninput="quantidadeProduto()">
+          <input type="text" id="busca" class="form-control" style="border: 1px solid #198754 !important; box-shadow: none !important; width: 18rem !important;" placeholder="🔎 Buscar código de barras, nome..." oninput="filtrarProdutos()" onkeydown="if(event.key === 'Enter') processarCodigoBarras()">
+
+          <!-- /////////////////////////////////////////////////////////// -->
+          <!-- NOVOS INPUTS SOLICITADOS -->
+          <!-- /////////////////////////////////////////////////////////// -->
+
+          <input type="text" id="exibirDescricao" class="form-control bg-body-secondary text-muted" style="border: 1px solid #198754 !important; box-shadow: none !important; width: 16rem !important;" placeholder="📄 Descrição do Produto" disabled>
+          <input type="text" id="exibirUnidade" class="form-control bg-body-secondary text-muted" style="border: 1px solid #198754 !important; box-shadow: none !important; width: 6rem !important;" placeholder="⚖️ UNID / Kg" disabled>          
+          <button type="button" class="btn btn-outline-success" style="border: 1px solid #198754 !important; white-space: nowrap;" onclick="abrirScanner()" title="Escanear código de barras pela câmera"> 📷 Escanear </button>
+          <button type="button" class="btn btn-success" style="border: 1px solid #198754 !important; white-space: nowrap;" onclick="buscarProduto()">Buscar</button>
+        </div>
+      </div>
+      <div id="listaProdutos" class="row g-2"></div>
+    </div>
+
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+    <!-- DIREITA - CARRINHO COMPACTO -->
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+    <div class="pdv-right bg-body text-body" id="carrinho-container">
+      <h5 class="fw-bold border-bottom pb-2">🛒 Carrinho</h5>
+      <div id="carrinho" class="flex-grow-1 overflow-auto pe-1 my-2"></div>
+      <hr class="my-2 text-secondary">
+      <div class="total-box d-flex justify-content-between align-items-center">
+        <span>Total:</span>
+        <div>
+          <span class="text-success">R$ </span>
+          <span id="total" class="text-success">0,00</span>
+        </div>
+      </div>
+
+      <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+      <!-- NOVOS BOTÕES EM GRUPO: CANCELAR E FINALIZAR VENDA -->
+      <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+      <div class="row g-2 mt-2">
+        <div class="col-6">
+          <button class="btn btn-outline-danger w-100 fw-bold py-2 shadow-sm" onclick="cancelarVenda()"> ❌ Cancelar Venda </button>
+        </div>
+        <div class="col-6">
+          <button class="btn btn-success w-100 fw-bold py-2 shadow-sm" onclick="finalizarVenda()"> 💳 Finalizar Venda </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- //////////////////////////////////////////////////////// -->
+    <!-- RODAPÉ FIXO (FOOTER) -->
+    <!-- //////////////////////////////////////////////////////// -->
+
+    <%- include('partials/footer') %>
+
+    <!-- /////////////////////////////////////////// -->
+    <!-- DEPENDÊNCIAS DE SCRIPTS DO ECOSSISTEMA CORE -->
+    <!-- /////////////////////////////////////////// -->
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // CORREÇÃO: Fallback estável apontando para o arquivo completo do Bootstrap JS na jDelivr oficial
+        if (typeof bootstrap === 'undefined') {
+            alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            document.write('src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"><\/script>');
+        }
+    </script>
+
+<!-- //////////////////////////////////////////////////////// -->
+<!-- iNCLUDE PARA USART HTML EXTERNO -->
+<!-- //////////////////////////////////////////////////////// -->
+
+<!-- ///////////////////////////////////////////////////////////////////////// -->
+<!-- Biblioteca de leitura de código de barras via câmera -->
+<!-- ////////////////////////////////////////////////////////////////////////// -->
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="/js/scanner.js"></script>
+
+<!-- ////////////////////////////////////////////////////////////////////////// -->
+
+    <script>
+
+      document.addEventListener("DOMContentLoaded", () => {
+          const containerDireito = document.getElementById("carrinho-container");
+          if (containerDireito) {
+              containerDireito.style.setProperty("padding-bottom", "45px", "important");
+          }
+
+          const containerEsquerdo = document.querySelector(".pdv-left");
+          if (containerEsquerdo) {
+              containerEsquerdo.style.setProperty("padding-bottom", "45px", "important");
+          }
+
+          const inputBusca = document.getElementById("busca");
+          if (inputBusca) {
+              inputBusca.focus();
+          }
+      });
+
+    </script>
+
+<!-- ////////////////////////////////////////////////////////////////////////// -->
+
+</body>
+</html>

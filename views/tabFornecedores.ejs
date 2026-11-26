@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fornecedores</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .table-scroll { max-height: calc(100vh - 300px); overflow: auto; }
+        .table-scroll table { min-width: 2800px; }
+        .table-scroll th, .table-scroll td { white-space: nowrap; }
+        .table-scroll .action-cell { padding-right: 1.25rem !important; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid">
+        <div class="card card-custom border-0">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 text-center">Tabela de Fornecedores</h3>
+            </div>
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-success" role="status"><%= mensagem %></div><% } %>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <a class="btn btn-success btn-sm" href="/fornecedores/novo">🆕 Novo</a>
+                    <a class="btn btn-outline-success btn-sm" href="/fornecedores/exportar.csv">📊 CSV</a>
+                    <span class="badge text-bg-secondary">Total: <strong><%= fornecedores.length %></strong></span>
+                    <form class="input-group input-group-sm ms-md-auto" action="/fornecedores" method="get" style="max-width:420px">
+                        <input name="q" type="search" class="form-control" placeholder="Razão, CNPJ, fantasia, e-mail ou rua" value="<%= busca || '' %>" aria-label="Pesquisar fornecedores">
+                        <button class="btn btn-outline-success" type="submit">🔍</button>
+                    </form>
+                </div>
+
+                <% if (fornecedores.length === 0) { %>
+                    <div class="alert alert-info mb-0">
+                        Nenhum fornecedor encontrado. <a href="/fornecedores/novo">Cadastrar agora</a>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive table-scroll shadow rounded border bg-body">
+                        <table class="table table-striped table-hover table-sm align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th><th>Ações</th><th>Razão Social</th><th>CNPJ</th><th>Nome Fantasia</th>
+                                    <th>IE</th><th>Abertura</th><th>Porte</th><th>Regime Tributário</th>
+                                    <th>Responsável</th><th>Cargo</th><th>Telefone</th><th>Celular</th><th>E-mail</th>
+                                    <th>CEP</th><th>Rua</th><th>Número</th><th>Bairro</th><th>Cidade</th><th>Estado</th>
+                                    <th>Observações</th><th>Cadastro</th><th>Alteração</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% fornecedores.forEach(fornecedor => { %>
+                                    <tr>
+                                        <td><%= fornecedor.id %></td>
+                                        <td class="text-nowrap action-cell">
+                                            <a class="btn btn-sm btn-outline-primary py-0" href="/fornecedores/<%= fornecedor.id %>/editar">Editar</a>
+                                            <form class="d-inline" method="post" action="/fornecedores/<%= fornecedor.id %>/excluir" onsubmit="return confirm('Excluir este fornecedor? Esta ação não pode ser desfeita.')">
+                                                <button class="btn btn-sm btn-outline-danger py-0" type="submit">Excluir</button>
+                                            </form>
+                                        </td>
+                                        <td class="text-nowrap"><%= fornecedor.razaoSocial %></td>
+                                        <td class="text-nowrap"><%= fornecedor.cnpj %></td>
+                                        <td><%= fornecedor.nomeFantasia %></td>
+                                        <td><%= fornecedor.ie %></td>
+                                        <td class="text-nowrap"><%= formatarDataBR(fornecedor.dataAbertura) %></td>
+                                        <td><%= fornecedor.porte %></td>
+                                        <td><%= fornecedor.regimeTributario %></td>
+                                        <td><%= fornecedor.nomeResponsavel %></td>
+                                        <td><%= fornecedor.cargo %></td>
+                                        <td><%= fornecedor.telefone %></td>
+                                        <td><%= fornecedor.celular %></td>
+                                        <td><%= fornecedor.email %></td>
+                                        <td><%= fornecedor.cep %></td>
+                                        <td><%= fornecedor.rua %></td>
+                                        <td><%= fornecedor.numero %></td>
+                                        <td><%= fornecedor.bairro %></td>
+                                        <td><%= fornecedor.cidade %></td>
+                                        <td><%= fornecedor.estado %></td>
+                                        <td class="text-truncate" style="max-width:180px" title="<%= fornecedor.observacoes %>"><%= fornecedor.observacoes %></td>
+                                        <td class="text-nowrap"><%= formatarDataBR(fornecedor.dataCadastro) %></td>
+                                        <td class="text-nowrap"><%= formatarDataBR(fornecedor.dataAlteracao) %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

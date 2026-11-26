@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Consulta de Orçamentos</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .btn-xs { padding: 1px 5px; font-size: .72rem; border-radius: 3px; font-weight: 600; }
+        .orcamentos-table th, .orcamentos-table td { white-space: nowrap; }
+        .orcamentos-table .action-cell { padding-right: 1.25rem !important; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid px-2">
+        <div class="card card-custom border-0">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 text-center">Tabela de Orçamentos</h3>
+            </div>
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-success" role="status"><%= mensagem %></div><% } %>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <a href="/orcamentos/novo" class="btn btn-sm btn-primary text-light">➕ Novo</a>
+                    <a href="/orcamentos/exportar.json" class="btn btn-sm btn-warning fw-bold text-dark">⬇ JSON</a>
+                    <a href="/orcamentos/exportar.csv" class="btn btn-sm btn-success">📄 CSV</a>
+                    <a href="/orcamentos/novo" class="btn btn-sm btn-outline-success">📝 Cadastro</a>
+                    <span class="badge text-bg-secondary">Total de orçamentos: <strong><%= orcamentos.length %></strong></span>
+                    <form class="input-group input-group-sm ms-md-auto" action="/orcamentos" method="get" style="max-width:380px">
+                        <input name="q" class="form-control" type="search" placeholder="Pesquisar por cliente ou ID" value="<%= busca || '' %>" aria-label="Pesquisar orçamentos">
+                        <button class="btn btn-outline-success" type="submit">🔍</button>
+                    </form>
+                </div>
+
+                <% if (orcamentos.length === 0) { %>
+                    <div class="alert alert-info mb-0">
+                        Nenhum orçamento encontrado. <a href="/orcamentos/novo">Cadastrar agora</a>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-hover table-striped align-middle mb-0 orcamentos-table" style="font-size:.92rem">
+                            <thead class="table-dark text-uppercase" style="font-size:.8rem;letter-spacing:.5px">
+                                <tr>
+                                    <th>ID</th><th>Ações</th><th>Cliente</th>
+                                    <th class="text-center">Qtd. Itens</th><th class="text-end">Valor Total</th>
+                                    <th>Cadastro</th><th>Alteração</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% orcamentos.forEach(orcamento => { %>
+                                    <tr>
+                                        <td class="fw-bold text-secondary">#<%= orcamento.id %></td>
+                                        <td class="text-nowrap action-cell">
+                                            <a class="btn btn-xs btn-outline-primary" href="/orcamentos/<%= orcamento.id %>/editar">Editar</a>
+                                            <form class="d-inline" method="post" action="/orcamentos/<%= orcamento.id %>/excluir" onsubmit="return confirm('Excluir permanentemente o orçamento #<%= orcamento.id %>?')">
+                                                <button class="btn btn-xs btn-outline-danger" type="submit">Excluir</button>
+                                            </form>
+                                        </td>
+                                        <td class="fw-medium text-body"><%= orcamento.cliente %></td>
+                                        <td class="text-center"><span class="badge text-bg-secondary px-2 py-1"><%= orcamento.qtdItens %> itens</span></td>
+                                        <td class="text-end fw-bold text-success"><%= formatarMoeda(orcamento.valorTotal) %></td>
+                                        <td><%= formatarDataBR(orcamento.dataCadastro) %></td>
+                                        <td><%= formatarDataBR(orcamento.dataAlteracao) %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,599 @@
+<!-- =========================================================
+  ARQUIVO: constantinoNews.ejs
+
+  JORNAL DO VEREADOR GABRIEL CONSTANTINO
+
+  Tecnologias:
+  - HTML5
+  - CSS3
+  - Bootstrap 5.3
+
+  Tema:
+  - Light
+  - Dark
+  - Auto
+
+  Autor: Felipe Rodrigues - FullTime Technology
+========================================================= -->
+
+<%
+const [anoEdicao, mesEdicao, diaEdicao] = edicao.data.split('-').map(Number);
+const dataPorExtenso = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC'
+}).format(new Date(Date.UTC(anoEdicao, mesEdicao - 1, diaEdicao)));
+const dataArquivo = `${String(diaEdicao).padStart(2, '0')}${String(mesEdicao).padStart(2, '0')}${anoEdicao}`;
+const materiasAtivas = edicao.materias.filter(materia => materia.status !== 'Inativo');
+const manchetesTicker = materiasAtivas.slice(0, 5).map(materia => materia.titulo);
+%>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>edicao-<%= dataArquivo %></title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <!-- SCRIPT OFICIAL DE TEMAS BOOTSTRAP 5.3 -->
+  <script src="/js/color-modes.js"></script>
+
+  <script>
+    // O tema já é aplicado pelo script "Controle de tema imediato" logo abaixo; aqui só avisamos no console.
+    if (!document.documentElement.hasAttribute('data-bs-theme')) {
+      console.warn('/js/color-modes.js local não carregou. O tema será definido pelo script embutido.');
+    }
+  </script>
+  
+  <!-- Controle de tema nativo imediato para evitar flash visual -->
+  <script>
+      (() => {
+          const getStoredTheme = () => localStorage.getItem('theme');
+          const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          const resolveTheme = (tema) => tema === 'auto' ? getSystemTheme() : tema;
+          document.documentElement.setAttribute('data-bs-theme', resolveTheme(getStoredTheme() || 'auto'));
+      })();
+  </script>
+
+  <!-- Modo preview/PDF: liga cedo para não piscar o layout normal -->
+  <script>
+    if (/[?&]preview=1(&|$)/.test(window.location.search)) document.documentElement.classList.add('modo-preview');
+  </script>
+
+  <!-- BOOTSTRAP 5.3.3 CSS LOCAL -->
+  <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet">
+
+  <script>
+    // Confere se o Bootstrap local carregou (lê uma variável CSS dele; funciona também em file://).
+    // Se não carregou, usa o CDN como reserva — sem alert para o usuário final.
+    window.addEventListener('load', function () {
+      const ok = getComputedStyle(document.documentElement).getPropertyValue('--bs-blue').trim() !== '';
+      if (ok) return;
+      console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+      const cdn = document.createElement('link');
+      cdn.rel = 'stylesheet';
+      cdn.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+      cdn.integrity = 'sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH';
+      cdn.crossOrigin = 'anonymous';
+      document.head.appendChild(cdn);
+    });
+  </script>
+
+  <style>
+    :root {
+      --ink: #111009;
+      --cream: #F7F3EC;
+      --rule: #C8B89A;
+      --accent: #B5001F;
+      --muted: #6B6455;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 16px;
+      line-height: 1.75;
+      padding-top: 0; 
+    }
+    /* ── BARRA DO SISTEMA VERDE ── */
+    #nav-sistema-placeholder {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1050; 
+      height: 56px; 
+    }
+
+    /* ── CABEÇALHO FIXO INTEIRO (TICKER + MASTHEAD) ── */
+    .cabecalho-fixo {
+      position: fixed;
+      top: 56px; 
+      left: 0;
+      width: 100%;
+      z-index: 1000; 
+      background-color: var(--cream); 
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Espaçador dinâmico do conteúdo do jornal */
+    .main-wrapper {
+      margin-top: 310px;
+    }
+
+    /* ── MASTHEAD ── */
+    .masthead {
+      border-bottom: 3px double var(--ink);
+      padding: 0.5rem 0 1rem;
+    }
+
+    .masthead-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .masthead-meta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .masthead-logo-h1 {
+      text-align: center;
+      flex: 1;
+      margin: 0;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .masthead-logo-h1 img {
+      height: auto;
+      max-height: 65px;
+      width: auto;
+      display: inline-block;
+      vertical-align: middle;
+      object-fit: contain;
+    }
+
+    .masthead-tagline {
+      text-align: center;
+      font-family: 'Source Serif 4', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--muted);
+      border-top: 1px solid var(--rule);
+      padding-top: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    /* ── TICKER ── */
+    .ticker-bar {
+      position: relative; /* Base de posicionamento estável para a label */
+      width: 100%;
+      background: var(--ink);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 0.5rem 0;
+      overflow: hidden;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    /* 💡 CORREÇÃO CRÍTICA: Alinhado verticalmente preenchendo apenas a linha do ticker */
+    .ticker-label {
+      background: var(--accent);
+      color: #fff;
+      padding: 0 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      position: absolute;
+      z-index: 5;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ticker-scroll {
+      display: inline-block;
+      padding-left: 95px; /* Garante que o texto corra sem sumir atrás da etiqueta */
+      animation: ticker 28s linear infinite;
+    }
+
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ── NAV ── */
+    .section-nav {
+      border-bottom: 1px solid var(--rule);
+      padding: 0.5rem 0;
+    }
+
+    .section-nav a {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 0.25rem 0.75rem;
+      transition: color 0.15s;
+    }
+
+    .section-nav a:hover { color: var(--accent); }
+    .section-nav a.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+    /* ── Label de Edição e Grid ── */
+    .edition-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      font-weight: 500;
+      margin: 1.5rem 0 0.4rem;
+    }
+
+    .col-rule {
+      border-right: 1px solid var(--rule);
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+
+    @media (max-width: 767.98px) {
+      .col-rule { border-right: none; border-bottom: 1px solid var(--rule); padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+      .main-wrapper { margin-top: 350px; }
+    }
+    /* ── CARDS DE MATÉRIAS ── */
+    #col-1, #col-2, #col-3 {
+      min-width: 0;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+
+    .article-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+
+    .article-headline {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.35rem;
+      line-height: 1.3;
+      margin-bottom: 0.5rem;
+      color: var(--ink);
+      overflow-wrap: break-word;
+    }
+
+    .article-headline a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .article-headline a:hover { color: var(--accent); }
+
+    .article-deck {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 0.6rem;
+      text-align: justify;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .article-byline { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.05em; color: var(--muted); clear: both; }
+    .article-byline strong { color: var(--ink); font-weight: 500; }
+
+    /* Contorno editorial de jornal: foto à esquerda com texto justificado fluindo ao redor e preenchendo a coluna */
+    .article-photo-left {
+      display: flow-root;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+    }
+    .article-photo-left .photo-thumb {
+      float: left;
+      width: 130px;
+      margin: 0 1rem 0.5rem 0;
+    }
+    .article-photo-left .photo-thumb img { width: 100%; height: auto; display: block; background: transparent; }
+    .article-photo-left .photo-thumb img:not([src$=".svg" i]) { filter: sepia(15%) contrast(1.05); }
+    .article-photo-left .photo-text { min-width: 0; }
+    .article-photo-left .article-headline { font-size: 1.05rem; }
+
+    .img-story { width: 100%; height: auto; display: block; margin-bottom: 0.6rem; background: transparent; }
+    .img-story:not([src$=".svg" i]) { filter: sepia(10%) contrast(1.05); }
+    .img-caption { font-family: 'DM Sans', sans-serif; font-size: 0.68rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 0.25rem; margin-bottom: 0.75rem; }
+
+    .featured-headline { font-family: 'Playfair Display', serif; font-weight: 900; font-size: clamp(1.7rem, 3.5vw, 2.4rem); line-height: 1.2; margin-bottom: 0.6rem; overflow-wrap: break-word; }
+    .featured-headline a { color: inherit; text-decoration: none; transition: color 0.15s; }
+    .featured-headline a:hover { color: var(--accent); }
+    .featured-img { width: 100%; height: auto; display: block; margin-bottom: 0.5rem; background: transparent; }
+    .featured-img:not([src$=".svg" i]) { filter: sepia(8%) contrast(1.08); }
+
+    /* ── RODAPÉ ── */
+    /* Footer fixo na base da tela: o conteúdo rola entre o topo fixo e o footer */
+    #footer-placeholder {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      background-color: var(--cream);
+    }
+
+    #footer-placeholder .footer { position: static !important; }
+
+    .jornal-footer {
+      border-top: 3px double var(--ink);
+      margin-top: 2rem;
+      padding: 0.85rem 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .jornal-footer .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; color: var(--ink); letter-spacing: -0.01em; }
+    .jornal-footer .footer-logo span { color: var(--accent); }
+
+    /* ── MODO PREVIEW / PDF (/edicoes/ID/preview?preview=1) ───────────────────
+       Mesma página, em formato de folha: sem NAV/Footer do sistema, cabeçalho e rodapé do jornal no fluxo,
+       três colunas sempre lado a lado. Vale na tela e na impressão. */
+    html.modo-preview #nav-sistema-placeholder,
+    html.modo-preview #footer-placeholder { display: none !important; }
+    html.modo-preview .cabecalho-fixo { position: static; top: auto; }
+    html.modo-preview .main-wrapper { margin-top: 0 !important; padding-bottom: 0 !important; }
+    html.modo-preview .ticker-scroll { animation: none; }
+    html.modo-preview .row > .col-12.col-md-4 { flex: 0 0 auto; width: 33.33333333%; }
+    html.modo-preview .col-rule { border-right: 1px solid var(--rule); border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+    html.modo-preview body { max-width: 297mm; margin: 0 auto; }
+
+    /* Botão "Salvar PDF": existe só no preview e nunca sai no PDF impresso */
+    .barra-preview { display: none; }
+    html.modo-preview .barra-preview {
+      display: flex;
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 2000;
+      gap: 0.5rem;
+    }
+
+    @media screen {
+      html.modo-preview { background: #8d887b; }
+      html.modo-preview body { box-shadow: 0 0 18px rgba(0, 0, 0, .35); min-height: 100vh; }
+    }
+
+    @media print {
+      @page { size: A4 landscape; margin: 8mm; }
+      html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      html.modo-preview body { max-width: none; box-shadow: none; }
+      .barra-preview { display: none !important; }
+      /* Só itens pequenos não podem ser cortados. Blocos grandes (.mb-4: título + foto + texto) precisam poder
+         quebrar entre páginas; se não couberem sob o cabeçalho, a linha das colunas inteira era empurrada
+         para a folha seguinte e sobrava um vazio na 1ª página. */
+      html.modo-preview .article-photo-left,
+      html.modo-preview .featured-img,
+      html.modo-preview .img-story,
+      html.modo-preview .photo-thumb,
+      html.modo-preview .img-caption { break-inside: avoid; }
+
+      /* O 1º item de cada coluna sempre pode quebrar, para as colunas começarem logo abaixo do cabeçalho */
+      html.modo-preview #col-1 > :first-child,
+      html.modo-preview #col-2 > :first-child,
+      html.modo-preview #col-3 > :first-child { break-inside: auto; }
+
+      /* Título e etiqueta não ficam sozinhos no fim da página; evita linhas soltas de parágrafo */
+      html.modo-preview .article-label,
+      html.modo-preview .article-headline,
+      html.modo-preview .featured-headline { break-after: avoid; }
+      html.modo-preview p { orphans: 3; widows: 3; }
+    }
+  </style>
+  
+</head>
+<body>
+
+  <!-- BOTÃO SALVAR PDF (aparece só no preview: ?edicao=ID&preview=1) -->
+  <!-- BARRA DE AÇÕES DO PREVIEW (aparece só no preview: ?edicao=ID&preview=1) -->
+  <div class="barra-preview">
+    <a href="/edicoes/<%= encodeURIComponent(edicao.id) %>/materias" class="btn btn-secondary btn-sm shadow"
+       title="Retornar à grade de distribuição de matérias">
+      ← Voltar à Grade
+    </a>
+    <button type="button" id="btnSalvarPdf" class="btn btn-danger btn-sm shadow"
+            title="Abre a janela de impressão: escolha “Salvar como PDF” como destino">
+      💾 Salvar PDF
+    </button>
+  </div>
+
+  <!-- BARRA DE NAVEGAÇÃO FIXA INTERNA/SISTEMA -->
+  <div id="nav-sistema-placeholder"><%- include('partials/navbar') %></div>
+  <!-- ── CABEÇALHO FIXO DO TOPO (TICKER + MASTHEAD + NAV) ─────────────────────── -->
+  <div class="cabecalho-fixo" id="meu-cabecalho-top">
+
+    <!-- TICKER BAR -->
+    <div class="ticker-bar">
+      <span class="ticker-label">Ao vivo</span>
+      <span class="ticker-scroll">
+        <% if (manchetesTicker.length) { %>
+          <% [...manchetesTicker, ...manchetesTicker].forEach(titulo => { %><%= titulo %> &nbsp;·&nbsp;<% }) %>
+        <% } else { %>
+          Edição sem matérias ativas
+        <% } %>
+      </span>
+    </div>
+
+    <!-- MASTHEAD -->
+    <div class="container-fluid px-4">
+      <div class="masthead">
+        <div class="masthead-top">
+          <div class="masthead-meta" id="meta-data"><%= dataPorExtenso.charAt(0).toLocaleUpperCase('pt-BR') + dataPorExtenso.slice(1) %></div>
+          <h1 class="masthead-logo-h1">
+            <img src="/images/Logotipos/imagem-constantino-vermelho.png" alt="Constantino News" />&nbsp;<span>News</span>
+          </h1>
+          <div class="masthead-meta" id="meta-edicao" style="text-align:right;">Edição Nº <%= edicao.numero %></div>
+        </div>
+        <div class="masthead-tagline">"Tudo que importa, no tempo certo."</div>
+      </div>
+    </div>
+
+    <!-- NAV EDITORIAS -->
+    <div class="container-fluid px-4">
+      <nav class="section-nav d-flex flex-wrap gap-1">
+        <a href="#" class="active">Brasil</a>
+        <a href="#">Mundo</a>
+        <a href="#">Economia</a>
+        <a href="#">Esporte</a>
+        <a href="#">Tecnologia</a>
+        <a href="#">Cultura</a>
+        <a href="#">Opinião</a>
+      </nav>
+    </div>
+
+  </div><!-- /cabecalho-fixo -->
+
+  <!-- ── WRAPPER PRINCIPAL (CONTEÚDO E CONDIÇÃO DE ROLAGEM) ────────────────────────── -->
+  <!-- A classe abaixo recebe espaçamento dinâmico via JS para não sumir sob o topo fixo -->
+  <div class="main-wrapper">
+
+    <div class="container-fluid px-4">
+      <!-- <p class="edition-label" id="edition-label">Edição de hoje · Brasil & Mundo</p> -->
+      <div class="row g-4 mt-3">
+        <% [1, 2, 3].forEach(coluna => {
+          const materiasColuna = materiasAtivas
+            .filter(materia => Number(materia.coluna) === coluna)
+            .sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0));
+        %>
+          <div class="col-12 col-md-4 <%= coluna < 3 ? 'col-rule' : '' %>" id="col-<%= coluna %>">
+            <% materiasColuna.forEach((materia, indice) => { %>
+              <%- include('partials/newsArticle', {
+                materia,
+                primeiro: indice === 0,
+                ultimo: indice === materiasColuna.length - 1
+              }) %>
+            <% }) %>
+          </div>
+        <% }) %>
+      </div><!-- /row -->
+    </div><!-- /container-fluid -->
+    <!-- ── RODAPÉ DO JORNAL (ACIMA DO FOOTER DO SISTEMA) ────────────────── -->
+    <div class="container-fluid px-4">
+      <div class="jornal-footer">
+        <div class="footer-logo">Constantino<span> News</span></div>
+        <p class="mt-1 mb-0">© 2026 Felipe Rodrigues - FullTime Technology. Todos os direitos reservados.</p>
+      </div>
+    </div>
+
+    <!-- ── INCLUSÃO DO RODAPÉ DO SISTEMA ─────────────────────────────────── -->
+    <div id="footer-placeholder"><%- include('partials/footer') %></div>
+
+  </div><!-- /main-wrapper -->
+
+  <!-- DEPENDÊNCIAS DE SCRIPTS DO ECOSSISTEMA CORE -->
+  <script src="/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+      if (typeof bootstrap === 'undefined') {
+          console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+          const scriptCdn = document.createElement('script');
+          scriptCdn.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';
+          scriptCdn.integrity = 'sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz';
+          scriptCdn.crossOrigin = 'anonymous';
+          document.body.appendChild(scriptCdn);
+      }
+  </script>
+
+  <!-- Ajusta dinamicamente a margem para evitar sobreposição de elementos -->
+  <script>
+      (() => {
+          const cabecalho = document.getElementById('meu-cabecalho-top');
+          const wrapper = document.querySelector('.main-wrapper');
+          
+          if (!cabecalho || !wrapper) return;
+
+          const recalcularEspacoTopo = () => {
+              const alturaCabecalho = cabecalho.offsetHeight;
+              wrapper.style.marginTop = (alturaCabecalho + 10) + 'px';
+          };
+
+          window.addEventListener('load', recalcularEspacoTopo);
+          window.addEventListener('resize', recalcularEspacoTopo);
+          
+          new MutationObserver(recalcularEspacoTopo).observe(cabecalho, { childList: true, subtree: true });
+          
+          recalcularEspacoTopo();
+      })();
+
+      // Reserva espaço no fim do conteúdo para o footer fixo não cobrir a última matéria
+      (() => {
+          const footerBox = document.getElementById('footer-placeholder');
+          const wrapper = document.querySelector('.main-wrapper');
+          if (!footerBox || !wrapper) return;
+
+          const recalcularEspacoFooter = () => {
+              wrapper.style.paddingBottom = (footerBox.offsetHeight + 16) + 'px';
+          };
+
+          window.addEventListener('load', recalcularEspacoFooter);
+          window.addEventListener('resize', recalcularEspacoFooter);
+
+          // Acompanha mudanças na altura do rodapé do sistema
+          if ('ResizeObserver' in window) {
+              new ResizeObserver(recalcularEspacoFooter).observe(footerBox);
+          } else {
+              new MutationObserver(recalcularEspacoFooter).observe(footerBox, { childList: true, subtree: true });
+          }
+
+          recalcularEspacoFooter();
+      })();
+  </script>
+  <!-- Edição fornecida pelo MySQL na rota Express /edicoes/:id/preview.
+       ?preview=1 → layout de folha (sem NAV/footer do sistema)
+       ?imprimir=1 → abre direto a janela de impressão / Salvar como PDF -->
+  <script>
+    const botaoPdf = document.getElementById('btnSalvarPdf');
+    if (botaoPdf) botaoPdf.addEventListener('click', () => window.print());
+
+    const parametros = new URLSearchParams(window.location.search);
+    if (parametros.get('imprimir') === '1') {
+      window.addEventListener('load', () => setTimeout(() => window.print(), 400));
+    }
+  </script>
+
+  </body>
+</html>

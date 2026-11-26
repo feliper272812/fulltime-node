@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Produtos</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { min-height: 100%; padding: 72px 0 56px; background: #f5f7fb; }
+        [data-bs-theme="dark"] body { background: #121414; }
+        .card-custom { border-radius: 16px; box-shadow: 0 0 25px rgba(0,0,0,.08); }
+        .table-scroll { max-height: calc(100vh - 300px); overflow: auto; }
+        .table-scroll table { min-width: 1800px; }
+        .table-scroll th, .table-scroll td { white-space: nowrap; }
+        .table-scroll .action-cell { padding-right: 1.25rem !important; }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <main class="container-fluid">
+        <div class="card card-custom border-0">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0 text-center">Tabela de Produtos</h3>
+            </div>
+            <div class="card-body">
+                <% if (mensagem) { %><div class="alert alert-success" role="status"><%= mensagem %></div><% } %>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <a class="btn btn-success btn-sm" href="/produtos/novo">🆕 Novo</a>
+                    <a class="btn btn-outline-success btn-sm" href="/produtos/exportar.csv">📊 CSV</a>
+                    <span class="badge text-bg-secondary">Total: <strong><%= produtos.length %></strong></span>
+                    <form class="input-group input-group-sm ms-md-auto" action="/produtos" method="get" style="max-width:420px">
+                        <input name="q" type="search" class="form-control" placeholder="Nome, código, SKU, marca, categoria ou estoque" value="<%= busca || '' %>" aria-label="Pesquisar produtos">
+                        <button class="btn btn-outline-success" type="submit">🔍</button>
+                    </form>
+                </div>
+
+                <% if (produtos.length === 0) { %>
+                    <div class="alert alert-info mb-0">
+                        Nenhum produto encontrado. <a href="/produtos/novo">Cadastrar agora</a>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive table-scroll shadow rounded border bg-body">
+                        <table class="table table-striped table-hover table-sm align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th><th>Ações</th><th>Status</th><th>Nome do Produto</th>
+                                    <th>Código</th><th>Código de Barras</th><th>SKU</th><th>Marca</th>
+                                    <th>Categoria</th><th>Unidade</th><th>NCM</th><th>CEST</th>
+                                    <th>Preço de Custo</th><th>Preço de Venda</th><th>Estoque</th>
+                                    <th>Estoque Mínimo</th><th>Descrição</th><th>Cadastro</th><th>Alteração</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% produtos.forEach(produto => { %>
+                                    <tr>
+                                        <td><%= produto.id %></td>
+                                        <td class="text-nowrap action-cell">
+                                            <a class="btn btn-sm btn-outline-primary py-0" href="/produtos/<%= produto.id %>/editar">Editar</a>
+                                            <form class="d-inline" method="post" action="/produtos/<%= produto.id %>/excluir" onsubmit="return confirm('Excluir este produto? Esta ação não pode ser desfeita.')">
+                                                <button class="btn btn-sm btn-outline-danger py-0" type="submit">Excluir</button>
+                                            </form>
+                                        </td>
+                                        <td><span class="badge <%= produto.status === 'Ativo' ? 'text-bg-primary' : 'text-bg-warning' %>"><%= produto.status %></span></td>
+                                        <td><%= produto.nome %></td>
+                                        <td><%= produto.codigo %></td>
+                                        <td><%= produto.codigoBarras || '—' %></td>
+                                        <td><%= produto.sku || '—' %></td>
+                                        <td><%= produto.marca || '—' %></td>
+                                        <td><%= produto.categoria || '—' %></td>
+                                        <td><%= produto.unidade %></td>
+                                        <td><%= produto.ncm || '—' %></td>
+                                        <td><%= produto.cest || '—' %></td>
+                                        <td><%= formatarMoeda(produto.precoCusto) %></td>
+                                        <td><%= formatarMoeda(produto.precoVenda) %></td>
+                                        <td><%= produto.estoque %></td>
+                                        <td><%= produto.estoqueMinimo %></td>
+                                        <td class="text-truncate" style="max-width:180px" title="<%= produto.descricao %>"><%= produto.descricao || '—' %></td>
+                                        <td><%= formatarDataBR(produto.dataCadastro) %></td>
+                                        <td><%= formatarDataBR(produto.dataAlteracao) %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
