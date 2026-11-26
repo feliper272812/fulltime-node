@@ -1,0 +1,120 @@
+<svg class="dark " xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180.5 616.3" width="1180.5" height="616.3" id="m9c6461__root" data-diagram-type="flowchart">
+  <style data-mercat-style="universal">.mercat text{font-family:'Google Sans',Roboto,Arial,sans-serif;fill:var(--m-text);dominant-baseline:central}.mercat .m-node .m-shape{fill:var(--m-node-fill);stroke:var(--m-node-stroke);stroke-width:1.5px}.mercat .m-edge .m-path{fill:none;stroke:var(--m-line);stroke-width:1.5px}.mercat .m-edge-label .m-pill-bg,.mercat .m-edge-label .m-shape{fill:var(--m-pill-bg);stroke:var(--m-pill-border);stroke-width:1px}.mercat .m-edge-label .m-label{fill:var(--m-text-sec)}.mercat .m-group .m-shape{fill:var(--m-group-fill);stroke:var(--m-group-stroke);stroke-width:1px}.mercat .m-group .m-frame{fill:none;stroke:var(--m-group-stroke);stroke-width:1px}.mercat .m-group .m-header{fill:var(--m-group-hdr)}.mercat .m-group .m-label{fill:var(--m-group-text)}.mercat .t-label{font-size:13px;font-weight:500}.mercat .t-group{font-size:12px;font-weight:600}.mercat .t-edge{font-size:11px;font-weight:400}</style>
+  <style data-mercat-style="theme-light">#m9c6461__root{--m-text:#1f1f1f;--m-text-sec:#797979;--m-line:#545454;--m-node-fill:#f8f9fa;--m-node-stroke:#747775;--m-group-fill:#f8f9fa;--m-group-stroke:#747775;--m-group-hdr:#f4f4f4;--m-group-text:#1f1f1f;--m-pill-bg:#fbfbfb;--m-pill-border:#d7d7d7}</style>
+  <style data-mercat-style="theme-dark">#m9c6461__root.dark{--m-text:#e3e3e3;--m-text-sec:#959595;--m-line:#bfbfbf;--m-node-fill:#2d2e30;--m-node-stroke:#8e918f;--m-group-fill:#2d2e30;--m-group-stroke:#8e918f;--m-group-hdr:#292929;--m-group-text:#e3e3e3;--m-pill-bg:#232323;--m-pill-border:#424242}</style>
+  <style data-mercat-style="type">#m9c6461__root .m-node .flowchart-divider,#m9c6461__root .m-group .flowchart-divider{fill:none;stroke:var(--m-node-stroke);stroke-width:1px}#m9c6461__root .m-group&gt;.m-shape{stroke:none}#m9c6461__root .m-group&gt;.m-header{fill:var(--m-group-hdr);stroke:none}#m9c6461__root .m-label.flowchart-subgraph-title{fill:var(--m-text-sec);font-size:12px;font-weight:600}</style>
+  <style data-mercat-style="diagram">#m9c6461__root .m-s0 .m-shape,#m9c6461__root .m-s0 .m-path{fill:#00758f;stroke:#003b49;stroke-width:2px}#m9c6461__root .m-s0 .m-label,#m9c6461__root .m-s0.m-label{fill:#ffffff}#m9c6461__root .m-s1 .m-shape,#m9c6461__root .m-s1 .m-path{fill:#009639;stroke:#004d1d;stroke-width:2px}#m9c6461__root .m-s1 .m-label,#m9c6461__root .m-s1.m-label{fill:#000000}#m9c6461__root .m-s2 .m-shape,#m9c6461__root .m-s2 .m-path{fill:#339933;stroke:#1b5e20}#m9c6461__root.dark .m-s2 .m-shape,#m9c6461__root.dark .m-s2 .m-path{fill:#153415;stroke:#31aa3a}#m9c6461__root.dark .m-s2 .m-label,#m9c6461__root.dark .m-s2.m-label{fill:#ffffff}</style>
+  <g class="mercat mercat-flowchart" transform="translate(-40, -27)">
+    <defs>
+      <marker id="m9c6461__mk-arrow" refX="9.45" refY="3.4" markerWidth="10.8" markerHeight="6.8" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+        <path d="M 0 0 L 10.8 3.4 L 0 6.8 Z" class="m-marker" fill="var(--m-line)" stroke="none"/>
+      </marker>
+    </defs>
+    <g class="m-node m-group" id="m9c6461__group__AmbientePortavel" data-role="container">
+      <rect x="55" y="42" width="1150.5" height="586.3" rx="6" ry="6" class="m-shape"/>
+      <path d="M 55 48 Q 55 42, 61 42 L 1199.5 42 Q 1205.5 42, 1205.5 48 L 1205.5 70 L 55 70 Z" class="m-header"/>
+      <line x1="55" y1="70" x2="1205.5" y2="70" class="flowchart-divider"/>
+      <rect x="55" y="42" width="1150.5" height="586.3" rx="6" ry="6" class="m-frame"/>
+      <text x="67" y="56" class="m-label flowchart-subgraph-title t-group" text-anchor="start">💾 Ambiente Portável (D:/dev - Sem Admin)</text>
+      <g class="m-node m-group" id="m9c6461__group__ClusterNode" data-role="container">
+        <rect x="313.32" y="478.5" width="759.18" height="121.8" rx="6" ry="6" class="m-shape"/>
+        <path d="M 313.32 484.5 Q 313.32 478.5, 319.32 478.5 L 1066.5 478.5 Q 1072.5 478.5, 1072.5 484.5 L 1072.5 506.5 L 313.32 506.5 Z" class="m-header"/>
+        <line x1="313.32" y1="506.5" x2="1072.5" y2="506.5" class="flowchart-divider"/>
+        <rect x="313.32" y="478.5" width="759.18" height="121.8" rx="6" ry="6" class="m-frame"/>
+        <text x="325.32" y="492.5" class="m-label flowchart-subgraph-title t-group" text-anchor="start">⚙️ Cluster Backend: fulltime-node (Node.js + Express + EJS)</text>
+      </g>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__Cliente__NGINX__0" data-role="connector">
+      <path d="M 191.66 169.6 L 191.66 214.7 Q 191.66 220.7, 197.66 220.7 L 478.99 220.7 Q 484.99 220.7, 484.99 226.7 L 484.99 303.35" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__NGINX__N1__0" data-role="connector">
+      <path d="M 401.19 359.85 L 401.19 525.15" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__NGINX__N2__0" data-role="connector">
+      <path d="M 457.05 359.85 L 457.05 468.5 Q 457.05 474.5, 463.05 474.5 L 591.82 474.5 Q 597.82 474.5, 597.82 480.5 L 597.82 525.15" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__NGINX__N3__0" data-role="connector">
+      <path d="M 512.92 359.85 L 512.92 436.5 Q 512.92 442.5, 518.92 442.5 L 781.48 442.5 Q 787.48 442.5, 787.48 448.5 L 787.48 525.15" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__NGINX__N4__0" data-role="connector">
+      <path d="M 568.79 359.85 L 568.79 420.5 Q 568.79 426.5, 574.79 426.5 L 971.41 426.5 Q 977.41 426.5, 977.41 432.5 L 977.41 525.15" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__N1__DB__0" data-role="connector">
+      <path d="M 331.97 553.4 L 76 553.4 Q 70 553.4, 70 547.4 L 70 190.25 Q 70 184.25, 76 184.25 L 895.22 184.25 Q 901.22 184.25, 901.22 178.25 L 901.22 147.35 Q 901.22 141.35, 907.22 141.35 L 915.87 141.35" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__N2__DB__0" data-role="connector">
+      <path d="M 672.65 554.75 L 672.65 612.3 Q 672.65 618.3, 678.65 618.3 L 1146.5 618.3 Q 1152.5 618.3, 1152.5 612.3 L 1152.5 134.35 Q 1152.5 128.35, 1146.5 128.35 L 1133.85 128.35" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__N3__DB__0" data-role="connector">
+      <path d="M 862.31 554.75 L 862.31 612.3 Q 862.31 618.3, 868.31 618.3 L 1146.5 618.3 Q 1152.5 618.3, 1152.5 612.3 L 1152.5 147.35 Q 1152.5 141.35, 1146.5 141.35 L 1133.85 141.35" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-edge" id="m9c6461__edge__N4__DB__0" data-role="connector">
+      <path d="M 1053.85 572.23 L 1146.5 572.23 Q 1152.5 572.23, 1152.5 566.23 L 1152.5 160.35 Q 1152.5 154.35, 1146.5 154.35 L 1133.85 154.35" class="m-path" marker-start="url(#m9c6461__mk-arrow)" marker-end="url(#m9c6461__mk-arrow)"/>
+    </g>
+    <g class="m-node m-node--stadium" id="m9c6461__node__Cliente" data-role="vertex">
+      <rect x="90" y="114.45" width="203.32" height="53.8" rx="26.9" ry="26.9" class="m-shape"/>
+      <text x="191.66" y="141.35" class="m-label t-label" text-anchor="middle"><tspan x="191.66" dy="-8.45px">🌐 Navegador do Usuário</tspan><tspan x="191.66" dy="16.9px">http://localhost:8080</tspan></text>
+    </g>
+    <g class="m-node m-node--cylinder m-s0" id="m9c6461__node__DB" data-role="vertex">
+      <path d="M 917.22 111 L 917.22 171.69 A 107.64 13.01 0 0 0 1132.5 171.69 L 1132.5 111 Z" class="m-shape"/>
+      <ellipse cx="1024.86" cy="111" rx="107.64" ry="13.01" class="m-shape"/>
+      <text x="1024.86" y="154.35" class="m-label t-label" text-anchor="middle"><tspan x="1024.86" dy="-16.9px">🗄️ MySQL Portável</tspan><tspan x="1024.86" dy="16.9px">D:/dev/mysql | 127.0.0.1:3306</tspan><tspan x="1024.86" dy="16.9px">(mysql2 Pool)</tspan></text>
+    </g>
+    <g class="m-node m-node--rect m-s1" id="m9c6461__node__NGINX" data-role="vertex">
+      <rect x="333.32" y="304.7" width="303.34" height="53.8" class="m-shape"/>
+      <text x="484.99" y="331.6" class="m-label t-label" text-anchor="middle"><tspan x="484.99" dy="-8.45px">🛡️ NGINX (Proxy Reverso &amp; Load Balancer)</tspan><tspan x="484.99" dy="16.9px">D:/dev/nginx | Porta: 8080 | Round-Robin</tspan></text>
+    </g>
+    <g class="m-node m-node--rect m-s2" id="m9c6461__node__N1" data-role="vertex">
+      <rect x="333.32" y="526.5" width="149.67" height="53.8" class="m-shape"/>
+      <text x="408.15" y="553.4" class="m-label t-label" text-anchor="middle"><tspan x="408.15" dy="-8.45px">🟢 Instância Node 1</tspan><tspan x="408.15" dy="16.9px">127.0.0.1:3001</tspan></text>
+    </g>
+    <g class="m-node m-node--rect m-s2" id="m9c6461__node__N2" data-role="vertex">
+      <rect x="522.98" y="526.5" width="149.67" height="53.8" class="m-shape"/>
+      <text x="597.82" y="553.4" class="m-label t-label" text-anchor="middle"><tspan x="597.82" dy="-8.45px">🟢 Instância Node 2</tspan><tspan x="597.82" dy="16.9px">127.0.0.1:3002</tspan></text>
+    </g>
+    <g class="m-node m-node--rect m-s2" id="m9c6461__node__N3" data-role="vertex">
+      <rect x="712.65" y="526.5" width="149.67" height="53.8" class="m-shape"/>
+      <text x="787.48" y="553.4" class="m-label t-label" text-anchor="middle"><tspan x="787.48" dy="-8.45px">🟢 Instância Node 3</tspan><tspan x="787.48" dy="16.9px">127.0.0.1:3003</tspan></text>
+    </g>
+    <g class="m-node m-node--rect m-s2" id="m9c6461__node__N4" data-role="vertex">
+      <rect x="902.31" y="526.5" width="150.18" height="53.8" class="m-shape"/>
+      <text x="977.41" y="553.4" class="m-label t-label" text-anchor="middle"><tspan x="977.41" dy="-8.45px">🟢 Instância Node 4</tspan><tspan x="977.41" dy="16.9px">127.0.0.1:3004</tspan></text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="427.01" y="251.55" width="115.96" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="484.99" y="262.7" class="m-label t-edge" text-anchor="middle">HTTP / WebSockets</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="365.88" y="444.5" width="70.62" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="401.19" y="455.65" class="m-label t-edge" text-anchor="middle">proxy_pass</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="421.74" y="392.2" width="70.62" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="457.05" y="403.35" class="m-label t-edge" text-anchor="middle">proxy_pass</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="614.89" y="431.35" width="70.62" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="650.2" y="442.5" class="m-label t-edge" text-anchor="middle">proxy_pass</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="942.1" y="448.2" width="70.62" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="977.41" y="459.35" class="m-label t-edge" text-anchor="middle">proxy_pass</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="451.91" y="173.1" width="67.4" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="485.61" y="184.25" class="m-label t-edge" text-anchor="middle">TCP / SQL</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="1082.8" y="362.17" width="67.4" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="1116.5" y="373.32" class="m-label t-edge" text-anchor="middle">TCP / SQL</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="1081.1" y="593" width="67.4" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="1114.8" y="604.15" class="m-label t-edge" text-anchor="middle">TCP / SQL</text>
+    </g>
+    <g class="m-edge-label">
+      <rect x="1074.95" y="561.08" width="67.4" height="22.3" rx="11.15" ry="11.15" class="m-pill-bg"/>
+      <text x="1108.65" y="572.23" class="m-label t-edge" text-anchor="middle">TCP / SQL</text>
+    </g>
+  </g>
+</svg>
