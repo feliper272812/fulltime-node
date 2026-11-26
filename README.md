@@ -20,6 +20,9 @@ entre as instâncias do servidor web.
 
 ---
 
+---
+
+
 ## 🏗️ Diagrama de Arquitetura (Proxy Reverso e Balanceamento)
 
 ```mermaid
