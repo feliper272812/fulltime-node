@@ -455,6 +455,10 @@ app.get('/index-sistema', exigirAutenticacao, (req, res) => {
   res.render('index-sistema');
 });
 
+app.get('/retaguarda', exigirAutenticacao, (req, res) => {
+  res.render('retaguarda');
+});
+
 app.get('/jsonreader5', exigirAutenticacao, (req, res) => {
   res.render('jsonreader5');
 });
