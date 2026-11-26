@@ -22,7 +22,7 @@ entre as instâncias do servidor web.
 
 ## Loop de eventos de NodeJs
 
-![Diagrama Event Loop](ReadMe/EventLoop-1.jpg)
+![Diagrama Event Loop](ReadMe/EventLoop.jpg)
 
 ## 🏗️ Diagrama de Arquitetura (Proxy Reverso e Balanceamento)
 
