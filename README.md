@@ -4,6 +4,22 @@ Sistema web completo e portável projetado para execução direta em pendrive/dr
 
 ---
 
+   O Sistema FullTime-Node é um sistema não bloqueante e escalável que se baseia nos loops de evento do NGINX
+e NodeJs
+
+NGINX é um Proxy Reverso e NodeJs é um Servidor Web. Ambos são orientados a eventos e não bloqueantes, são assíncronos!
+assim cada requisição HTTP que chega, gera um callback (função assíncrona) e libera o ssitema para a próxima requisição.
+Desta maneira, a disponibilidade é altíssima, pois o sistema continua recebendo e processando as demais requisições, quando
+há uma resposta, ela é automaticamente encaminhada à requisição origem. 
+
+O Proxy reverso NGINX foi configurado aqui para gerar 4 instâncias do servidor NodeJs (server.js), que estão escutando respectivamente
+nas portas TCP 3001, 3002, 3003, 3004, assim, quando um está ocupado o outro responde outra requisição que chega. A disponibilidade é
+altíssima e como os servidores web são virtuais, gerados pelo proxy reverso, eles pode ser acrescidos de mais instâncias o que promove
+uma escalabilidade imensa. Além disso o proxy reverso fornece o balanceamento de carga, que é justamente equilibrar estas requisições 
+entre as instâncias do servidor web.
+
+---
+
 ## 🏗️ Diagrama de Arquitetura (Proxy Reverso e Balanceamento)
 
 ```mermaid
@@ -41,7 +57,6 @@ flowchart TD
     style N4 fill:#339933,stroke:#1b5e20,color:#fff
     style DB fill:#00758F,stroke:#003b49,color:#fff,stroke-width:2px
 ```
-
 ---
 
 ## 📁 Estrutura de Diretórios do Ambiente
