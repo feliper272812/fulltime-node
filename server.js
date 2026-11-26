@@ -74,6 +74,7 @@ const {
   CREATE_TABLE_MATERIAS_SQL
 } = require('./news-schema');
 const { registerNewsRoutes } = require('./news-routes');
+const { registerMarkdownEditorRoutes } = require('./markdown-editor-routes');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -129,6 +130,7 @@ function exigirAutenticacao(req, res, next) {
   return res.redirect('/');
 }
 
+registerMarkdownEditorRoutes(app, { exigirAutenticacao, projectDir: __dirname });
 registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao });
 
 // Função auxiliar para importar um array de usuários para o MySQL

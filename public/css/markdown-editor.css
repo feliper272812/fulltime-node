@@ -1,0 +1,81 @@
+body {
+    min-height: 100vh;
+    padding: 72px 0 56px;
+    background: #f5f7fb;
+}
+
+[data-bs-theme="dark"] body {
+    background: #121414;
+}
+
+.markdown-editor-page {
+    min-height: calc(100vh - 128px);
+}
+
+.markdown-editor-card {
+    border-radius: 14px;
+}
+
+.markdown-file-select {
+    width: min(100%, 320px);
+}
+
+.markdown-toolbar .btn {
+    min-width: 38px;
+}
+
+.markdown-source,
+.markdown-preview {
+    height: min(68vh, 760px);
+    overflow-y: auto;
+}
+
+.markdown-source {
+    resize: none;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .92rem;
+    line-height: 1.55;
+    tab-size: 4;
+}
+
+.markdown-preview {
+    overflow-wrap: anywhere;
+}
+
+.markdown-preview img {
+    max-width: 100%;
+    height: auto;
+}
+
+.markdown-preview pre {
+    padding: .8rem;
+    overflow-x: auto;
+    border-radius: .375rem;
+    background: var(--bs-tertiary-bg);
+}
+
+.markdown-preview table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+    padding: .45rem;
+    border: 1px solid var(--bs-border-color);
+}
+
+@media (max-width: 575.98px) {
+    body {
+        padding-top: 68px;
+        padding-bottom: 52px;
+    }
+
+    .markdown-editor-page {
+        padding-inline: .5rem;
+    }
+
+    .markdown-editor-card .card-body {
+        padding: .85rem;
+    }
+}

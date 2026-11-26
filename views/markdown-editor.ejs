@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editor Markdown | FullTime Technology</title>
+    <script src="/js/color-modes.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/markdown-editor.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/nav-sistema') %>
+    <main class="container-fluid markdown-editor-page">
+        <section class="card border-0 shadow-sm markdown-editor-card" aria-labelledby="editor-title">
+            <header class="card-header bg-success text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h1 class="h4 mb-0" id="editor-title">Editor de arquivos Markdown</h1>
+                <span class="small">Os arquivos são salvos em <code class="text-white">ReadMe/</code></span>
+            </header>
+            <div class="card-body">
+                <% if (mensagem) { %>
+                    <div class="alert alert-success py-2" role="status"><%= mensagem %></div>
+                <% } %>
+                <% if (!files.length) { %>
+                    <div class="alert alert-warning" role="status">Não há arquivos .md na pasta ReadMe/.</div>
+                <% } %>
+
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <label class="form-label mb-0 fw-semibold" for="markdown-file">Arquivo</label>
+                    <select class="form-select form-select-sm markdown-file-select" id="markdown-file" <%= files.length ? '' : 'disabled' %>>
+                        <% files.forEach(file => { %>
+                            <option value="<%= file %>" <%= file === currentFile ? 'selected' : '' %>><%= file %></option>
+                        <% }); %>
+                    </select>
+                    <button class="btn btn-success btn-sm" id="save-markdown" type="button" <%= currentFile ? '' : 'disabled' %>>
+                        <span aria-hidden="true">💾</span> Salvar
+                    </button>
+                    <span class="small text-body-secondary" id="save-status" role="status" aria-live="polite"></span>
+                </div>
+
+                <div class="btn-toolbar markdown-toolbar mb-2" role="toolbar" aria-label="Formatação Markdown">
+                    <div class="btn-group btn-group-sm me-2 mb-1" role="group" aria-label="Ênfase">
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="bold" title="Negrito" aria-label="Negrito"><strong>B</strong></button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="italic" title="Itálico" aria-label="Itálico"><em>I</em></button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="strike" title="Tachado" aria-label="Tachado"><s>S</s></button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="heading" title="Título" aria-label="Título">H</button>
+                    </div>
+                    <div class="btn-group btn-group-sm me-2 mb-1" role="group" aria-label="Parágrafo">
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="quote" title="Citação" aria-label="Citação">❝</button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="unordered-list" title="Lista" aria-label="Lista">•≡</button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="ordered-list" title="Lista numerada" aria-label="Lista numerada">1.</button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="code" title="Código" aria-label="Código">&lt;/&gt;</button>
+                    </div>
+                    <div class="btn-group btn-group-sm me-2 mb-1" role="group" aria-label="Alinhamento">
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="align-left" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">☰</button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="align-center" title="Centralizar" aria-label="Centralizar">☷</button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="align-right" title="Alinhar à direita" aria-label="Alinhar à direita">☷</button>
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="align-justify" title="Justificar" aria-label="Justificar">▤</button>
+                    </div>
+                    <div class="btn-group btn-group-sm mb-1" role="group" aria-label="Inserir">
+                        <button class="btn btn-outline-secondary" type="button" data-md-action="link" title="Inserir link" aria-label="Inserir link">🔗</button>
+                        <button class="btn btn-outline-secondary" type="button" id="open-image-picker" title="Inserir imagem" aria-label="Inserir imagem">🖼️</button>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-xl-6">
+                        <label class="form-label fw-semibold" for="markdown-content">Conteúdo Markdown</label>
+                        <textarea class="form-control markdown-source" id="markdown-content" spellcheck="false"><%= content %></textarea>
+                    </div>
+                    <div class="col-12 col-xl-6">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h2 class="h6 fw-semibold mb-0">Pré-visualização</h2>
+                            <span class="small text-body-secondary">HTML sanitizado</span>
+                        </div>
+                        <article class="markdown-preview border rounded bg-body p-3" id="markdown-preview" aria-live="polite"></article>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal fade" id="image-picker-modal" tabindex="-1" aria-labelledby="image-picker-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="image-picker-title">Inserir imagem</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label" for="existing-image">Imagens existentes</label>
+                    <div class="input-group mb-3">
+                        <select class="form-select" id="existing-image">
+                            <% images.forEach(image => { %>
+                                <option value="<%= image.path %>"><%= image.label %></option>
+                            <% }); %>
+                        </select>
+                        <button class="btn btn-outline-success" type="button" id="insert-existing-image" <%= images.length ? '' : 'disabled' %>>Inserir</button>
+                    </div>
+                    <hr>
+                    <label class="form-label" for="new-image">Enviar uma imagem (PNG, JPEG, GIF ou WebP; até 10 MB)</label>
+                    <input class="form-control" id="new-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+                    <button class="btn btn-success mt-2" type="button" id="upload-and-insert-image">Enviar e inserir</button>
+                    <div class="small text-body-secondary mt-2" id="image-upload-status" role="status" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/markdown-editor.js" defer></script>
+</body>
+</html>
