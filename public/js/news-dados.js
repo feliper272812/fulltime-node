@@ -1,14 +1,15 @@
 /* =========================================================
   ARQUIVO: js/news-dados.js (PARTE 1/2)
 
-  CAMADA DE DADOS DO CONSTANTINO NEWS (localStorage)
-  Usada por: tabEdicoes.html, tabMaterias.html, cadMaterias.html
+  CAMADA DE DADOS LEGADA DO CONSTANTINO NEWS (localStorage)
+  Usada como compatibilidade pelo leitor constantino-news.html.
+  As telas administrativas atuais armazenam as edições no MySQL.
 
-  Chaves:
+  Chaves de compatibilidade:
   - NEWS_EDICOES       : lista de edições; cada edição guarda as próprias matérias
-  - NEWS_EDICAO_ATIVA  : id da edição em que se está trabalhando
-  - NEWS_EDITAR        : id da matéria a editar (lido por cadMaterias.html)
-  - NEWS_MATERIAS      : formato antigo (lista solta); migrado sozinho
+  - NEWS_EDICAO_ATIVA  : seleção de edição antiga do navegador
+  - NEWS_EDITAR        : seleção de matéria antiga do navegador
+  - NEWS_MATERIAS      : formato antigo (lista solta)
 
   Formato de uma edição:
   { id, data: "AAAA-MM-DD", nome, status: "Rascunho" | "Publicada",

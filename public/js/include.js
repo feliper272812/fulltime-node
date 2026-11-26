@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // que o fetch só aconteça se o elemento existir no HTML da página atual.
   loadHTML("header-placeholder", "header.html");
   loadHTML("nav-placeholder", "nav.html");
-  loadHTML("nav-sistema-placeholder", "nav-sistema.html");
   loadHTML("footer-placeholder", "footer.html");
 });
 

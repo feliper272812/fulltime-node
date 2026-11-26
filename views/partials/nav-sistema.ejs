@@ -1,0 +1,120 @@
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+<!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+<script>
+  document.addEventListener('click', function (event) {
+    const btnSair = event.target.closest('#btnSair');
+    if (!btnSair) return;
+    event.preventDefault();
+    window.location.href = '/logout';
+  });
+</script>
+
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+<!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
+<!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-success shadow-sm">
+  <div class="container-fluid">
+    <!-- Dropdown Perfil/Menu -->
+    <div class="dropdown me-2">
+      <a href="#" class="nav-link d-flex align-items-center dropdown-toggle text-light" data-bs-toggle="dropdown">
+        <img
+          id="navbarUserAvatar"
+          src="<%= (usuarioLogado && usuarioLogado.imagem) ? usuarioLogado.imagem : '/images/Usuarios/Felipe.jpg' %>"
+          alt="<%= usuarioLogado ? usuarioLogado.usuario : 'Felipe' %>"
+          onerror="this.onerror=null;this.src='/images/Usuarios/Felipe.jpg'"
+          width="40"
+          height="40"
+          class="rounded-circle object-fit-cover me-2"
+        />
+        <% if (usuarioLogado) { %>
+          <span class="d-none d-sm-inline"><%= usuarioLogado.usuario %></span>
+        <% } %>
+      </a>
+      <ul class="dropdown-menu text-small shadow" style="max-height: calc(100vh - 7rem); overflow-y: auto; overscroll-behavior: contain;">
+        <% if (usuarioLogado) { %>
+          <li><h6 class="dropdown-header"><%= usuarioLogado.usuario %> (<%= usuarioLogado.departamento %>)</h6></li>
+          <li><hr class="dropdown-divider" /></li>
+        <% } %>
+        <li><a class="dropdown-item" href="/about">Sobre a FullTime</a></li>
+        <li><a class="dropdown-item" href="/clientes-pf/novo">Cadastro de Clientes PF</a></li>
+        <li><a class="dropdown-item" href="/clientes-pj/novo">Cadastro de Clientes PJ</a></li>
+        <li><a class="dropdown-item" href="/fornecedores/novo">Cadastro de Fornecedores</a></li>
+        <li><a class="dropdown-item" href="/usuarios">Cadastro de Usuários</a></li>
+        <li><a class="dropdown-item" href="/usuarios">Tabela de Usuários</a></li>
+        <li><a class="dropdown-item" href="/produtos/novo">Cadastro de Produtos</a></li>
+        <li><a class="dropdown-item" href="/produtos">Tabela de Produtos</a></li>
+        <li><a class="dropdown-item" href="/orcamentos/novo">Cadastro de Orçamentos</a></li>
+        <li><a class="dropdown-item" href="/orcamentos">Tabela de Orçamentos</a></li>
+        <li><a class="dropdown-item" href="/os/novo">Cadastro de Ordens de Serviço</a></li>
+        <li><a class="dropdown-item" href="/os">Tabela de Ordens de Serviço</a></li>
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item" href="/">Terra</a></li>
+        <li><a class="dropdown-item" href="/fulltime">FullTime</a></li>
+        <li><a class="dropdown-item" href="/brasil">Brasil</a></li>
+        <li><a class="dropdown-item" href="/rs">Rio Grande do Sul</a></li>
+        <li><a class="dropdown-item" href="/canoas">Canoas</a></li>
+        <li><a class="dropdown-item" href="/constantino">Constantino</a></li>
+        <li><a class="dropdown-item" href="/pt">PT</a></li>
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item" href="/felipe">Felipe Rodrigues</a></li>
+        <li><a class="dropdown-item" href="/gabriel-constantino">Gabriel Constantino</a></li>
+        <li><a class="dropdown-item" href="/video-chat">Video Chat</a></li>
+        <li><a class="dropdown-item" href="#">Perfil</a></li>
+        <li><a id="btnSair" class="dropdown-item text-danger" href="/logout">Sair</a></li>
+      </ul>
+    </div>
+
+    <!-- Botão Hamburguer para Mobile -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav me-auto mb-2 mb-md-0">
+        <li class="nav-item"><a class="nav-link active text-light" href="/">Inicio</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="/pdv">PDV</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="/usuarios">Usuários</a></li>
+
+        <li class="nav-item"><a class="nav-link text-light" href="/edicoes">Edições</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="constantino-news.html">Jornal 1</a></li>
+        <!-- <li class="nav-item"><a class="nav-link text-light" href="fulltime2-news.html">Jornal 2</a></li> -->
+        <li class="nav-item"><a class="nav-link text-light" href="jsonreader5.html">JSON Reader</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="remover-fundo.html">Remover Fundo</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="webRTCvideoChat.html">Video Chat</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="apresentador.html">Apresentação</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="conversorWebm-MP4.html">Conversor</a></li>
+        <li class="nav-item"><a class="nav-link text-light" href="/index-sistema">Sistema</a></li>
+      </ul>
+
+      <!-- Seletor de Tema -->
+      <ul class="navbar-nav ms-md-auto mb-2 mb-md-0">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle text-light" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            🎨 Tema
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="themeDropdown">
+            <li>
+              <button type="button" class="dropdown-item" onclick="document.documentElement.setAttribute('data-bs-theme', 'light'); localStorage.setItem('theme', 'light')">
+                ☀️ Modo Claro
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item" onclick="document.documentElement.setAttribute('data-bs-theme', 'dark'); localStorage.setItem('theme', 'dark')">
+                🌙 Modo Escuro
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item" onclick="document.documentElement.setAttribute('data-bs-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); localStorage.setItem('theme', 'auto')">
+                💻 Automático
+              </button>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ////////////////////////////////////////////////////////////////////////////////////////////////// -->

@@ -1,9 +1,6 @@
 ////////////////////////////////////////////////////////////////
 // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
 ////////////////////////////////////////////////////////////////
-const STORAGE_KEY = 'PDV_PRODUTOS';
-const EDIT_KEY = 'PRODUTO_EDITAR';
-const SESSION_KEY = 'PDV_HABILITADO';
 const CART_STORAGE_KEY = 'PDV_CARRINHO';
 
 // Imagem padrão (SVG embutido) para produtos sem foto ou com foto quebrada — funciona offline
@@ -20,14 +17,14 @@ let carrinho = [];
 ////////////////////////////////////////////////////////////////
 // INIT - INICIALIZAÇÃO DA APLICAÇÃO (SEM ATALHOS DE TECLADO)
 ////////////////////////////////////////////////////////////////
-document.addEventListener('DOMContentLoaded', () => {
-  // Guarda de Rota — Executado obrigatoriamente no início do DOMContentLoaded
-  if (localStorage.getItem("PDV_HABILITADO") !== "1") {
-    alert("Acesso negado! Por favor, realize o login.");
-    window.location.href = "index.html";
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if (!await carregarProdutos()) return;
+  } catch (erro) {
+    console.error('[PDV] Não foi possível carregar os produtos:', erro);
+    alert('Não foi possível carregar os produtos do banco de dados.');
     return;
   }
-  carregarProdutos();
   carregarCarrinhoSalvo();
   renderizarProdutos();
   atualizarCarrinho();
@@ -39,9 +36,24 @@ document.addEventListener('DOMContentLoaded', () => {
 ////////////////////////////////////////////////////////////////
 // PERSISTÊNCIA DE DADOS
 ////////////////////////////////////////////////////////////////
-function carregarProdutos() {
-  produtos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+async function carregarProdutos() {
+  const resposta = await fetch('/api/produtos');
+  if (resposta.redirected) {
+    window.location.href = '/';
+    return false;
+  }
+  if (!resposta.ok) throw new Error(`Falha na API de produtos (${resposta.status}).`);
+  const dados = await resposta.json();
+  if (!Array.isArray(dados)) throw new Error('A API retornou uma lista de produtos inválida.');
+  produtos = dados;
   console.log('[PDV] produtos carregados:', produtos.length);
+  return true;
+}
+
+function escaparHTML(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[caractere]);
 }
 
 function carregarCarrinhoSalvo() {
@@ -52,32 +64,7 @@ function salvarCarrinhoNoStorage() {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(carrinho));
 }
 
-// Importação que lê o JSON e joga instantaneamente na tela da esquerda
-function carregarJsonParaLocalStorage() {
-  const inputArquivo = document.createElement('input');
-  inputArquivo.type = 'file';
-  inputArquivo.accept = '.json';
-  inputArquivo.onchange = function (event) {
-    const arquivo = event.target.files;
-    if (!arquivo || arquivo.length === 0) return;
-    const leitor = new FileReader();
-    leitor.onload = function (e) {
-      try {
-        const conteudoTexto = e.target.result;
-        const dadosValidados = JSON.parse(conteudoTexto);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dadosValidados));
-        alert(`Sucesso! O arquivo "${arquivo[0].name}" foi carregado com sucesso no Local Storage (PDV_PRODUTOS).`);
-        carregarProdutos();
-        renderizarProdutos();
-      } catch (error) {
-        console.error("Erro ao processar o arquivo JSON:", error);
-        alert("Erro: O arquivo selecionado não contém um formato JSON válido.");
-      }
-    };
-    leitor.readAsText(arquivo[0]);
-  };
-  inputArquivo.click();
-}
+
 ////////////////////////////////////////////////////////////////
 // CATÁLOGO DE PRODUTOS (RENDERIZAÇÃO E FILTRO)
 ////////////////////////////////////////////////////////////////
@@ -85,7 +72,7 @@ function renderizarProdutos(lista = produtos) {
   const div = document.getElementById('listaProdutos');
   if (!div) return;
   if (lista.length === 0) {
-    div.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum produto cadastrado na base local.</div>';
+    div.innerHTML = '<div class="col-12 text-center text-muted py-5">Nenhum produto cadastrado no banco de dados.</div>';
     return;
   }
   div.innerHTML = lista.map(p => {
@@ -96,8 +83,10 @@ function renderizarProdutos(lista = produtos) {
     
     let caminhoImagem = PLACEHOLDER_IMG;
     
-    if (p.imagemBase64) {
-      // Imagem salva pelo cadProdutos.html (data URL em Base64) — usa direto
+    if (p.imagemSrc) {
+      caminhoImagem = p.imagemSrc;
+    } else if (p.imagemBase64) {
+      // Imagem salva pelo cadastro EJS (data URL em Base64) — usa direto
       caminhoImagem = p.imagemBase64;
     } else if (nomeImagem) {
       // Se for caminho absoluto, URL remota ou relativa direta, utiliza sem alteração
@@ -107,27 +96,27 @@ function renderizarProdutos(lista = produtos) {
     }
     // ---------------------------------------------------------------
 
-    const idProduto = p.id || p.ID || p.codigo || p.Codigo;
+    const idProduto = p.id;
     const precoVenda = p.precoVenda || p.preco || p.Preco || p.valor || p.Valor || 0;
     const codBarsExibir = p.codigoBarras || p.codBarras || '—';
     
     return `
       <div class="col-md-6">
-        <div class="card produto-card shadow-sm h-100 overflow-hidden" onclick="adicionarCarrinhoPorID('${idProduto}')">
+        <div class="card produto-card shadow-sm h-100 overflow-hidden" onclick="adicionarCarrinhoPorID('${escaparHTML(idProduto)}')">
           <div class="row g-0 h-100 align-items-center">
             <div class="col-4 bg-light d-flex justify-content-center p-2" style="height: 100px;">
-              <img src="${caminhoImagem}" class="img-fluid rounded object-fit-contain" style="max-height: 80px; max-width: 80px;" alt="${p.nome || ''}" onerror="this.onerror=null;this.src=PLACEHOLDER_IMG">
+              <img src="${escaparHTML(caminhoImagem)}" class="img-fluid rounded object-fit-contain" style="max-height: 80px; max-width: 80px;" alt="${escaparHTML(p.nome || '')}" onerror="this.onerror=null;this.src=PLACEHOLDER_IMG">
             </div>
             <div class="col-8">
               <div class="card-body p-2 text-start">
-                <div class="fw-bold text-truncate text-body" style="font-size: 0.9rem;" title="${p.nome || ''}">
-                  ${p.nome || ''}
+                <div class="fw-bold text-truncate text-body" style="font-size: 0.9rem;" title="${escaparHTML(p.nome || '')}">
+                  ${escaparHTML(p.nome || '')}
                 </div>
                 <small class="text-muted d-block" style="font-size: 0.75rem;">
-                  Código: ${p.codigo || idProduto || ''}
+                  Código: ${escaparHTML(p.codigo || idProduto || '')}
                 </small>
-                <small class="text-muted d-block text-truncate" style="font-size: 0.72rem;" title="${codBarsExibir}">
-                  EAN: ${codBarsExibir}
+                <small class="text-muted d-block text-truncate" style="font-size: 0.72rem;" title="${escaparHTML(codBarsExibir)}">
+                  EAN: ${escaparHTML(codBarsExibir)}
                 </small>
                 <div class="text-success fw-bold mt-1" style="font-size: 0.9rem;">
                   R$ ${Number(precoVenda).toFixed(2).replace('.', ',')}
@@ -198,7 +187,7 @@ function processarCodigoBarras() {
   const eanBuscado = campoBusca.value.trim();
   if (!eanBuscado) return;
 
-  // Busca cirúrgica pelo Código de Barras no LocalStorage
+  // Busca o código de barras entre os produtos carregados do MySQL.
   const produtoAchado = produtos.find(p => 
     (p.codigoBarras || p.codBarras || '').toString().trim() === eanBuscado
   );
@@ -219,17 +208,14 @@ function processarCodigoBarras() {
     atualizarCamposDetalhe(null); 
 
     if (confirm(`Produto não cadastrado! Deseja cadastrar o código de barras [ ${eanBuscado} ]?`)) {
-      // Salva o código temporariamente para o arquivo cadProdutos.html ler ao carregar
-      localStorage.setItem('PRODUTO_CODIGO_BARRAS_PENDENTE', eanBuscado);
-      // Redireciona para a tela de inclusão
-      window.location.href = "cadProdutos.html";
+      window.location.href = `/produtos/novo?codigoBarras=${encodeURIComponent(eanBuscado)}`;
     } else {
       campoBusca.focus();
     }
   }
 }
 
-function buscarNoLocalStorage() {
+function buscarProduto() {
   const campoCodigo = document.getElementById('buscaInterna') || document.getElementById('busca');
   if (!campoCodigo) return;
   const codigoBuscado = campoCodigo.value.trim().toUpperCase();
@@ -255,8 +241,7 @@ function buscarNoLocalStorage() {
   } else {
     atualizarCamposDetalhe(null); 
     if (confirm(`Produto não cadastrado! Deseja cadastrar o código de barras [ ${codigoBuscado} ]?`)) {
-      localStorage.setItem('PRODUTO_CODIGO_BARRAS_PENDENTE', codigoBuscado);
-      window.location.href = "cadProdutos.html";
+      window.location.href = `/produtos/novo?codigoBarras=${encodeURIComponent(codigoBuscado)}`;
     } else {
       campoCodigo.focus();
     }
@@ -382,16 +367,16 @@ function atualizarCarrinho() {
       <div class="py-2 border-bottom border-secondary-subtle" style="font-size: 0.88rem;">
         <div class="carrinho-linha">
           <div class="d-flex align-items-center me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 fw-bold" style="font-size: 0.7rem; line-height: 1;" onclick="alterarQuantidade('${i.id}', -1)">-</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 fw-bold" style="font-size: 0.7rem; line-height: 1;" onclick="alterarQuantidade('${escaparHTML(i.id)}', -1)">-</button>
             <span class="mx-2 fw-bold text-body" style="min-width: 15px; text-align: center;">${formatarQtd(i)}</span>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 fw-bold" style="font-size: 0.7rem; line-height: 1;" onclick="alterarQuantidade('${i.id}', 1)">+</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 fw-bold" style="font-size: 0.7rem; line-height: 1;" onclick="alterarQuantidade('${escaparHTML(i.id)}', 1)">+</button>
           </div>
-          <span class="carrinho-nome text-body fw-medium" title="${i.nome}">${i.nome}</span>
+          <span class="carrinho-nome text-body fw-medium" title="${escaparHTML(i.nome)}">${escaparHTML(i.nome)}</span>
           <div class="carrinho-pontos"></div>
           <div class="carrinho-valores text-body">
             <small class="text-muted me-1">(${formatarQtd(i)} x R$ ${i.preco.toFixed(2).replace('.', ',')})</small>
             <span class="fw-bold text-success">R$ ${subtotal.toFixed(2).replace('.', ',')}</span>
-            <button type="button" class="btn btn-sm text-danger border-0 p-0 ms-2 fw-bold" style="font-size: 0.9rem;" onclick="removerItem('${i.id}')">✕</button>
+            <button type="button" class="btn btn-sm text-danger border-0 p-0 ms-2 fw-bold" style="font-size: 0.9rem;" onclick="removerItem('${escaparHTML(i.id)}')">✕</button>
           </div>
         </div>
       </div>
@@ -468,7 +453,7 @@ function finalizarVenda() {
     total += sub;
     htmlCupom += `
       <div class="cupom-item-linha">
-        <span>${String(idx + 1).padStart(2, '0')} ${i.nome.substring(0, 18)}</span>
+        <span>${String(idx + 1).padStart(2, '0')} ${escaparHTML(i.nome.substring(0, 18))}</span>
         <span>${formatarQtd(i)}x${i.preco.toFixed(2)} = ${sub.toFixed(2)}</span>
       </div>
     `;
