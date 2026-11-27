@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-br" data-bs-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FullTime Technology</title>
+  <script src="/js/color-modes.js"></script>
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      padding-bottom: 40px;
+      background-color: #f5f7fb;
+    }
+
+    [data-bs-theme="dark"] body {
+      background-color: #121212;
+    }
+
+    .brand-stage {
+      display: flex;
+      flex: 1;
+      min-height: calc(100vh - var(--navbar-height, 56px) - 42px);
+      align-items: center;
+      justify-content: center;
+      perspective: 1200px;
+    }
+
+    .fulltime-logo {
+      width: min(390px, 85vw);
+      animation: girarMoeda 6s linear infinite;
+      filter: drop-shadow(0 10px 15px rgba(0, 0, 0, .35));
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .fulltime-logo img {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    @keyframes girarMoeda {
+      0% { transform: rotateY(0deg); }
+      50% { transform: rotateY(180deg); }
+      100% { transform: rotateY(360deg); }
+    }
+  </style>
+</head>
+<body class="d-flex flex-column">
+  <%- include('partials/nav-sistema') %>
+
+  <main class="brand-stage">
+    <div class="fulltime-logo">
+      <img src="/imagens/Logotipos/logob-1-transparente.png" alt="Logotipo FullTime Technology">
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+  <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

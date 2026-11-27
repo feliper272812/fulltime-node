@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-br" data-bs-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Constantino</title>
+  <script src="/js/color-modes.js"></script>
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      padding-bottom: 40px;
+    }
+
+    .brand-stage {
+      display: flex;
+      flex: 1;
+      min-height: calc(100vh - var(--navbar-height, 56px) - 42px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-stage img {
+      width: min(900px, 90vw);
+      max-height: calc(100vh - var(--navbar-height, 56px) - 48px);
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body class="d-flex flex-column">
+  <%- include('partials/nav-sistema') %>
+
+  <main class="brand-stage">
+    <img src="/images/Logotipos/imagem-constantino.png" alt="Logotipo Constantino">
+  </main>
+
+  <%- include('partials/footer') %>
+  <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

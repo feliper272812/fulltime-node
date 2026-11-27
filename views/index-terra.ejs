@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-br" data-bs-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terra</title>
+  <script src="/js/color-modes.js"></script>
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      padding-bottom: 40px;
+      background-color: #f5f7fb;
+    }
+
+    [data-bs-theme="dark"] body {
+      background-color: #121212;
+    }
+
+    .brand-stage {
+      display: flex;
+      flex: 1;
+      min-height: calc(100vh - var(--navbar-height, 56px) - 42px);
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .brand-stage img {
+      max-width: 90vw;
+      max-height: calc(100vh - var(--navbar-height, 56px) - 48px);
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body class="d-flex flex-column">
+  <%- include('partials/nav-sistema') %>
+
+  <main class="brand-stage">
+    <img src="/imagens/Logotipos/Terra-Girando2-sem-fundo.gif" alt="Planeta Terra girando">
+  </main>
+
+  <%- include('partials/footer') %>
+  <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

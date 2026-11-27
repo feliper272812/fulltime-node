@@ -459,6 +459,38 @@ app.get('/retaguarda', exigirAutenticacao, (req, res) => {
   res.render('retaguarda');
 });
 
+app.get('/terra', exigirAutenticacao, (req, res) => {
+  res.render('index-terra');
+});
+
+app.get('/fulltime', exigirAutenticacao, (req, res) => {
+  res.render('index-fulltime');
+});
+
+app.get('/brasil', exigirAutenticacao, (req, res) => {
+  res.render('index-brasil');
+});
+
+app.get('/rs', exigirAutenticacao, (req, res) => {
+  res.render('index-rs');
+});
+
+app.get('/canoas', exigirAutenticacao, (req, res) => {
+  res.render('index-canoas');
+});
+
+app.get('/sesc', exigirAutenticacao, (req, res) => {
+  res.render('index-sesc');
+});
+
+app.get('/constantino', exigirAutenticacao, (req, res) => {
+  res.render('index-constantino');
+});
+
+app.get('/pt', exigirAutenticacao, (req, res) => {
+  res.render('index-pt');
+});
+
 app.get('/jsonreader5', exigirAutenticacao, (req, res) => {
   res.render('jsonreader5');
 });

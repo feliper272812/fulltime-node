@@ -1,7 +1,12 @@
 @echo off
 setlocal
 title FullTime Node - Encerrando Ambiente Portavel
-color 0C
+
+rem Codigos ANSI: somente as mensagens de erro/aviso ficam em vermelho.
+set "ESC="
+for /f %%E in ('echo prompt $E ^| cmd') do set "ESC=%%E"
+set "RED=%ESC%[91m"
+set "RST=%ESC%[0m"
 
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
@@ -16,6 +21,8 @@ set "NGINX_DIR=%DEV_DIR%\nginx"
 set "NGINX_EXE=%NGINX_DIR%\nginx.exe"
 set "NGINX_PID_FILE=%NGINX_DIR%\logs\nginx-windows.pid"
 set "MYSQL_DIR=%DEV_DIR%\mysql"
+set "NODE_DIR=%DEV_DIR%\nodejs"
+set "NODE_PID_DIR=%PROJECT_DIR%\logs\runtime"
 set "ERRORS=0"
 
 echo ========================================================
@@ -42,11 +49,10 @@ echo ========================================================
 if "%ERRORS%"=="0" (
     echo   Servicos do ambiente encerrados.
 ) else (
-    echo   [ERRO] Alguns servicos nao puderam ser encerrados.
+    echo %RED%  [ERRO] Alguns servicos nao puderam ser encerrados.%RST%
 )
 echo ========================================================
 echo.
-color 07
 pause
 exit /b %ERRORS%
 
@@ -79,7 +85,7 @@ for /l %%I in (1,1,5) do (
     timeout /t 1 /nobreak >nul
 )
 
-echo [AVISO] O NGINX nao encerrou graciosamente; finalizando apenas o PID %NGINX_PID%.
+echo %RED%[AVISO] O NGINX nao encerrou graciosamente; finalizando apenas o PID %NGINX_PID%.%RST%
 call :is_nginx_pid_running
 if errorlevel 1 (
     del "%NGINX_PID_FILE%" >nul 2>&1
@@ -88,12 +94,12 @@ if errorlevel 1 (
 )
 taskkill /F /T /PID %NGINX_PID% >nul 2>&1
 if errorlevel 1 (
-    echo [ERRO] Nao foi possivel encerrar o processo NGINX %NGINX_PID%.
+    echo %RED%[ERRO] Nao foi possivel encerrar o processo NGINX %NGINX_PID%.%RST%
     exit /b 1
 )
 call :is_nginx_pid_running
 if not errorlevel 1 (
-    echo [ERRO] O processo NGINX %NGINX_PID% continua ativo.
+    echo %RED%[ERRO] O processo NGINX %NGINX_PID% continua ativo.%RST%
     exit /b 1
 )
 del "%NGINX_PID_FILE%" >nul 2>&1
@@ -111,7 +117,7 @@ set "NGINX_PID="
 for /f "usebackq tokens=1" %%I in ("%NGINX_PID_FILE%") do set "NGINX_PID=%%I"
 call :is_nginx_pid_running
 if errorlevel 1 (
-    echo [ERRO] Nao foi possivel validar o PID recuperado do NGINX.
+    echo %RED%[ERRO] Nao foi possivel validar o PID recuperado do NGINX.%RST%
     exit /b 1
 )
 goto :stop_nginx_with_pid
@@ -144,6 +150,46 @@ exit /b 0
 
 :stop_node_port
 set "TARGET_PORT=%~1"
+set "NODE_PORT_PID_FILE=%NODE_PID_DIR%\node-%TARGET_PORT%.pid"
+if exist "%NODE_PORT_PID_FILE%" (
+    set "NODE_SUPERVISOR_PID="
+    for /f "usebackq tokens=1" %%I in ("%NODE_PORT_PID_FILE%") do set "NODE_SUPERVISOR_PID=%%I"
+    echo %NODE_SUPERVISOR_PID% | findstr /R "^[0-9][0-9]*$" >nul
+    if not errorlevel 1 (
+        call :is_node_supervisor_running
+        if not errorlevel 1 goto :stop_node_supervisor
+        tasklist /FI "PID eq %NODE_SUPERVISOR_PID%" | findstr /R /C:"[ ]%NODE_SUPERVISOR_PID%$" >nul
+        if not errorlevel 1 (
+            echo %RED%[AVISO] PID %NODE_SUPERVISOR_PID% nao corresponde ao supervisor FullTime da porta %TARGET_PORT%; processo deixado ativo.%RST%
+        )
+    )
+    del "%NODE_PORT_PID_FILE%" >nul 2>&1
+)
+goto :stop_legacy_node_port
+
+:stop_node_supervisor
+taskkill /F /T /PID %NODE_SUPERVISOR_PID% >nul 2>&1
+if errorlevel 1 (
+    echo %RED%[ERRO] Nao foi possivel encerrar o supervisor Node PID %NODE_SUPERVISOR_PID% da porta %TARGET_PORT%.%RST%
+    exit /b 1
+)
+for /l %%I in (1,1,5) do (
+    call :is_node_supervisor_running
+    if errorlevel 1 (
+        del "%NODE_PORT_PID_FILE%" >nul 2>&1
+        echo [OK] Node e npm/nodemon da porta %TARGET_PORT% encerrados.
+        exit /b 0
+    )
+    timeout /t 1 /nobreak >nul
+)
+echo %RED%[ERRO] O supervisor Node PID %NODE_SUPERVISOR_PID% continua ativo.%RST%
+exit /b 1
+
+:is_node_supervisor_running
+powershell.exe -NoProfile -Command "$port = [int]$env:TARGET_PORT; $pidValue = [int]$env:NODE_SUPERVISOR_PID; $project = $env:PROJECT_DIR; $p = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $pidValue); if ($p -and $p.Name -ieq 'cmd.exe' -and $p.CommandLine -like ('*' + $project + '*') -and $p.CommandLine -like '*npm.cmd*' -and $p.CommandLine -match 'npm\.cmd.*run (start|dev)' -and $p.CommandLine -like ('*PORT=' + $port + '*')) { exit 0 } else { exit 1 }" >nul 2>&1
+exit /b %ERRORLEVEL%
+
+:stop_legacy_node_port
 set "PORT_STOP_ERROR="
 for /f "tokens=5" %%I in ('netstat -ano -p tcp ^| findstr /R /C:":%TARGET_PORT% .*LISTENING"') do (
     call :stop_node_pid %%I
@@ -153,20 +199,32 @@ if defined PORT_STOP_ERROR exit /b 1
 exit /b 0
 
 :stop_node_pid
+rem Aceita dois formatos de instancia FullTime:
+rem   1) modo normal: node.exe "<projeto>\server.js"
+rem   2) modo dev:    node.exe server.js, filho de um node.exe do nodemon do projeto
+rem Retorna em NODE_TARGET_PID o processo a encerrar (arvore completa).
 set "NODE_PID=%~1"
 tasklist /FI "IMAGENAME eq node.exe" /FI "PID eq %NODE_PID%" | findstr /I /C:"node.exe" >nul
 if errorlevel 1 exit /b 0
-powershell.exe -NoProfile -Command "$p = Get-CimInstance Win32_Process -Filter 'ProcessId=%NODE_PID%'; if ($p -and $p.CommandLine -like '*%PROJECT_DIR%\server.js*') { exit 0 } else { exit 1 }" >nul 2>&1
-if errorlevel 1 (
-    echo [AVISO] PID %NODE_PID% na porta %TARGET_PORT% nao foi identificado como FullTime Node; deixado ativo.
+set "NODE_TARGET_FILE=%TEMP%\fulltime-node-target-%RANDOM%.tmp"
+powershell.exe -NoProfile -Command "$proj = $env:PROJECT_DIR; $cur = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $env:NODE_PID); $target = $null; if ($cur -and $cur.CommandLine -and $cur.CommandLine.IndexOf($proj + '\server.js', [StringComparison]::OrdinalIgnoreCase) -ge 0) { $target = $cur.ProcessId } else { $n = $cur; for ($i = 0; $i -lt 6 -and $n; $i++) { $n = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $n.ParentProcessId); if ($n -and $n.Name -ieq 'node.exe' -and $n.CommandLine -and $n.CommandLine.IndexOf($proj, [StringComparison]::OrdinalIgnoreCase) -ge 0 -and $n.CommandLine -match 'nodemon') { $target = $n.ProcessId; break } } }; if ($target) { $target } else { exit 1 }" > "%NODE_TARGET_FILE%" 2>nul
+set "NODE_TARGET_PID="
+if exist "%NODE_TARGET_FILE%" set /p "NODE_TARGET_PID="<"%NODE_TARGET_FILE%"
+del "%NODE_TARGET_FILE%" >nul 2>&1
+if not defined NODE_TARGET_PID (
+    echo %RED%[AVISO] PID %NODE_PID% na porta %TARGET_PORT% nao foi identificado como FullTime Node; deixado ativo.%RST%
     exit /b 1
 )
-taskkill /F /PID %NODE_PID% >nul 2>&1
+taskkill /F /T /PID %NODE_TARGET_PID% >nul 2>&1
 if errorlevel 1 (
-    echo [ERRO] Nao foi possivel encerrar o Node PID %NODE_PID%.
+    echo %RED%[ERRO] Nao foi possivel encerrar o Node PID %NODE_TARGET_PID%.%RST%
     exit /b 1
 )
-echo [OK] FullTime Node PID %NODE_PID% encerrado.
+if "%NODE_TARGET_PID%"=="%NODE_PID%" (
+    echo [OK] FullTime Node PID %NODE_PID% encerrado.
+) else (
+    echo [OK] FullTime Node ^(nodemon PID %NODE_TARGET_PID%^) da porta %TARGET_PORT% encerrado.
+)
 exit /b 0
 
 :stop_mysql
@@ -191,7 +249,7 @@ if errorlevel 1 (
 set "MYSQL_STOP_REQUESTED=1"
 "%MYSQL_DIR%\bin\mysqladmin.exe" -h 127.0.0.1 -u root shutdown >nul 2>&1
 if errorlevel 1 (
-    echo [ERRO] Nao foi possivel solicitar o encerramento do MySQL PID %MYSQL_PID%.
+    echo %RED%[ERRO] Nao foi possivel solicitar o encerramento do MySQL PID %MYSQL_PID%.%RST%
     exit /b 1
 )
 echo [OK] Encerramento solicitado ao MySQL PID %MYSQL_PID%.
