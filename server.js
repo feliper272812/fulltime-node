@@ -16,6 +16,9 @@ const express = require('express');
 const session = require('express-session');
 const mysql = require('mysql2/promise');
 const path = require('path');
+const fs = require('fs');
+const pino = require('pino');
+const pinoHttp = require('pino-http');
 const { randomBytes } = require('crypto');
 const { hashPassword, verifyPassword, isPasswordHash } = require('./password-utils');
 const {
@@ -84,6 +87,84 @@ const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('he
 if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
   throw new Error(`PORT inválida: ${process.env.PORT}`);
 }
+
+// Configuração do Logger Pino (salva em logs/fulltime-PORT.log e exibe no console)
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+let pinoPrettyDisponivel = false;
+try {
+  require.resolve('pino-pretty');
+  pinoPrettyDisponivel = true;
+} catch (_) {
+  pinoPrettyDisponivel = false;
+}
+
+const logFileBase = path.join(logsDir, `fulltime-${PORT}`);
+const loggerTargets = [
+  {
+    target: 'pino-roll',
+    level: process.env.LOG_LEVEL || 'info',
+    options: {
+      file: logFileBase,
+      frequency: 'daily',
+      extension: '.log',
+      dateFormat: 'yyyy-MM-dd',
+      mkdir: true,
+      limit: { count: 7 }
+    }
+  }
+];
+
+if (process.env.NODE_ENV !== 'production' && pinoPrettyDisponivel) {
+  loggerTargets.push({
+    target: 'pino-pretty',
+    level: process.env.LOG_LEVEL || 'info',
+    options: {
+      colorize: true,
+      singleLine: true,
+      translateTime: 'SYS:dd/mm/yyyy HH:MM:ss',
+      ignore: 'pid,hostname,port,req,res,responseTime',
+      messageFormat: '[{port}] {msg}'
+    }
+  });
+} else {
+  loggerTargets.push({
+    target: 'pino/file',
+    level: process.env.LOG_LEVEL || 'info',
+    options: { destination: 1 }
+  });
+}
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  base: { port: PORT },
+  redact: {
+    paths: ['req.headers.authorization', 'req.headers.cookie', 'req.body.senha'],
+    censor: '[OCULTO]'
+  },
+  serializers: {
+    req: (req) => ({ method: req.method, url: req.url }),
+    res: (res) => ({ statusCode: res.statusCode })
+  },
+  transport: {
+    targets: loggerTargets
+  }
+});
+
+app.use(pinoHttp({
+  logger,
+  autoLogging: {
+    ignore: (req) => /\.(css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|map)$/i.test(req.url.split('?')[0])
+  },
+  customSuccessMessage: (req, res, responseTime) =>
+    `${req.method} ${req.url} -> ${res.statusCode} (${Math.round(responseTime)}ms)`,
+  customErrorMessage: (req, res, err) =>
+    `${req.method} ${req.url} -> ${res.statusCode} [ERRO: ${err.message}]`,
+  customProps: () => ({ port: PORT })
+}));
 
 // Configuração da conexão com o MySQL Portátil (usuário root, sem senha)
 const dbConfig = {
@@ -343,7 +424,7 @@ app.get('/', async (req, res) => {
     dbConectado = true;
     await conn.end();
   } catch (err) {
-    console.error('[ERRO MySQL na rota /]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /');
   }
 
   res.render('index', {
@@ -389,7 +470,7 @@ app.post('/login', async (req, res) => {
       usuario: req.session.usuario
     });
   } catch (err) {
-    console.error('[ERRO MySQL na autenticação]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na autenticação');
     return res.status(500).json({
       sucesso: false,
       mensagem: 'Não foi possível autenticar neste momento.'
@@ -561,7 +642,7 @@ app.get('/usuarios', exigirAutenticacao, async (req, res) => {
     const mensagem = typeof req.query.mensagem === 'string' ? req.query.mensagem : '';
     res.render('usuarios-index', { usuarios, busca, mensagem });
   } catch (err) {
-    console.error('[ERRO MySQL na rota /usuarios]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /usuarios');
     res.status(500).send('Não foi possível carregar os usuários.');
   } finally {
     if (conn) await conn.end();
@@ -582,7 +663,7 @@ app.get('/usuarios/exportar.csv', exigirAutenticacao, async (req, res) => {
     res.attachment(`usuarios_${data}.csv`);
     res.type('text/csv; charset=utf-8').send(`\uFEFF${linhas.join('\r\n')}`);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar usuários para CSV]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar usuários para CSV');
     res.status(500).send('Não foi possível exportar os usuários.');
   } finally {
     if (conn) await conn.end();
@@ -611,7 +692,7 @@ app.get('/usuarios/:id/editar', exigirAutenticacao, async (req, res) => {
     if (usuarios.length === 0) return res.status(404).send('Usuário não encontrado.');
     res.render('usuarios-form', { usuario: usuarios[0], busca: '', mensagem: '' });
   } catch (err) {
-    console.error('[ERRO MySQL ao carregar edição de usuário]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao carregar edição de usuário');
     res.status(500).send('Não foi possível carregar o usuário.');
   } finally {
     if (conn) await conn.end();
@@ -652,7 +733,7 @@ app.post('/usuarios', exigirAutenticacao, async (req, res) => {
         mensagem: 'Já existe um usuário com esse nome.'
       });
     }
-    console.error('[ERRO MySQL ao criar usuário]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao criar usuário');
     res.status(500).render('usuarios-form', {
       usuario: { ...dados, senha: '' },
       busca: '',
@@ -709,7 +790,7 @@ app.post('/usuarios/:id', exigirAutenticacao, async (req, res) => {
         mensagem: 'Já existe um usuário com esse nome.'
       });
     }
-    console.error('[ERRO MySQL ao atualizar usuário]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao atualizar usuário');
     res.status(500).render('usuarios-form', {
       usuario: { ...dados, senha: '' },
       busca: '',
@@ -734,7 +815,7 @@ app.post('/usuarios/:id/excluir', exigirAutenticacao, async (req, res) => {
     if (resultado.affectedRows === 0) return res.status(404).send('Usuário não encontrado.');
     res.redirect('/usuarios?mensagem=Usu%C3%A1rio%20exclu%C3%ADdo%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao excluir usuário]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao excluir usuário');
     res.status(500).send('Não foi possível excluir o usuário.');
   } finally {
     if (conn) await conn.end();
@@ -800,7 +881,7 @@ app.get('/clientes-pf', exigirAutenticacao, async (req, res) => {
     const mensagem = typeof req.query.mensagem === 'string' ? req.query.mensagem : '';
     res.render('tabClientesPF', { clientes, busca, mensagem, formatarDataBR });
   } catch (err) {
-    console.error('[ERRO MySQL na rota /clientes-pf]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /clientes-pf');
     res.status(500).send('Não foi possível carregar os clientes pessoa física.');
   } finally {
     if (conn) await conn.end();
@@ -830,7 +911,7 @@ app.get('/clientes-pf/exportar.csv', exigirAutenticacao, async (req, res) => {
     res.attachment(`clientes_pf_${data}.csv`);
     res.type('text/csv; charset=utf-8').send(`\uFEFF${linhas.join('\r\n')}`);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar Clientes PF]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar Clientes PF');
     res.status(500).send('Não foi possível exportar os clientes pessoa física.');
   } finally {
     if (conn) await conn.end();
@@ -859,7 +940,7 @@ app.get('/clientes-pf/:id/editar', exigirAutenticacao, async (req, res) => {
     if (registros.length === 0) return res.status(404).send('Cliente não encontrado.');
     renderizarFormularioClientePF(res, clientePFParaView(registros[0]), '');
   } catch (err) {
-    console.error('[ERRO MySQL ao carregar edição de Cliente PF]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao carregar edição de Cliente PF');
     res.status(500).send('Não foi possível carregar o cliente.');
   } finally {
     if (conn) await conn.end();
@@ -883,7 +964,7 @@ app.post('/clientes-pf', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioClientePF(res, cliente, 'Já existe um cliente cadastrado com esse CPF.', 409);
     }
-    console.error('[ERRO MySQL ao criar Cliente PF]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao criar Cliente PF');
     return renderizarFormularioClientePF(res, cliente, 'Não foi possível salvar o cliente.', 500);
   } finally {
     if (conn) await conn.end();
@@ -927,7 +1008,7 @@ app.post('/clientes-pf/:id', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioClientePF(res, { ...cliente, id }, 'Já existe outro cliente cadastrado com esse CPF.', 409);
     }
-    console.error('[ERRO MySQL ao atualizar Cliente PF]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao atualizar Cliente PF');
     return renderizarFormularioClientePF(res, { ...cliente, id }, 'Não foi possível atualizar o cliente.', 500);
   } finally {
     if (conn) await conn.end();
@@ -945,7 +1026,7 @@ app.post('/clientes-pf/:id/excluir', exigirAutenticacao, async (req, res) => {
     if (resultado.affectedRows === 0) return res.status(404).send('Cliente não encontrado.');
     return res.redirect('/clientes-pf?mensagem=Cliente%20exclu%C3%ADdo%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao excluir Cliente PF]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao excluir Cliente PF');
     return res.status(500).send('Não foi possível excluir o cliente.');
   } finally {
     if (conn) await conn.end();
@@ -1024,7 +1105,7 @@ app.get('/clientes-pj', exigirAutenticacao, async (req, res) => {
     const mensagem = typeof req.query.mensagem === 'string' ? req.query.mensagem : '';
     res.render('tabClientesPJ', { clientes, busca, mensagem, formatarDataBR: formatarDataBRPJ });
   } catch (err) {
-    console.error('[ERRO MySQL na rota /clientes-pj]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /clientes-pj');
     res.status(500).send('Não foi possível carregar os clientes pessoa jurídica.');
   } finally {
     if (conn) await conn.end();
@@ -1057,7 +1138,7 @@ app.get('/clientes-pj/exportar.csv', exigirAutenticacao, async (req, res) => {
     res.attachment(`clientes_pj_${data}.csv`);
     res.type('text/csv; charset=utf-8').send(`\uFEFF${linhas.join('\r\n')}`);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar Clientes PJ]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar Clientes PJ');
     res.status(500).send('Não foi possível exportar os clientes pessoa jurídica.');
   } finally {
     if (conn) await conn.end();
@@ -1088,7 +1169,7 @@ app.get('/clientes-pj/:id/editar', exigirAutenticacao, async (req, res) => {
     if (registros.length === 0) return res.status(404).send('Cliente não encontrado.');
     renderizarFormularioClientePJ(res, clientePJParaView(registros[0]), '');
   } catch (err) {
-    console.error('[ERRO MySQL ao carregar edição de Cliente PJ]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao carregar edição de Cliente PJ');
     res.status(500).send('Não foi possível carregar o cliente.');
   } finally {
     if (conn) await conn.end();
@@ -1112,7 +1193,7 @@ app.post('/clientes-pj', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioClientePJ(res, cliente, 'Já existe um cliente cadastrado com esse CNPJ.', 409);
     }
-    console.error('[ERRO MySQL ao criar Cliente PJ]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao criar Cliente PJ');
     return renderizarFormularioClientePJ(res, cliente, 'Não foi possível salvar o cliente.', 500);
   } finally {
     if (conn) await conn.end();
@@ -1162,7 +1243,7 @@ app.post('/clientes-pj/:id', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioClientePJ(res, { ...(req.body || {}), id }, 'Já existe outro cliente cadastrado com esse CNPJ.', 409);
     }
-    console.error('[ERRO MySQL ao atualizar Cliente PJ]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao atualizar Cliente PJ');
     return renderizarFormularioClientePJ(res, { ...(req.body || {}), id }, 'Não foi possível atualizar o cliente.', 500);
   } finally {
     if (conn) await conn.end();
@@ -1180,7 +1261,7 @@ app.post('/clientes-pj/:id/excluir', exigirAutenticacao, async (req, res) => {
     if (resultado.affectedRows === 0) return res.status(404).send('Cliente não encontrado.');
     return res.redirect('/clientes-pj?mensagem=Cliente%20exclu%C3%ADdo%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao excluir Cliente PJ]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao excluir Cliente PJ');
     return res.status(500).send('Não foi possível excluir o cliente.');
   } finally {
     if (conn) await conn.end();
@@ -1294,7 +1375,7 @@ app.get('/produtos', exigirAutenticacao, async (req, res) => {
       formatarMoeda: formatarMoedaProduto
     });
   } catch (err) {
-    console.error('[ERRO MySQL na rota /produtos]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /produtos');
     res.status(500).send('Não foi possível carregar os produtos.');
   } finally {
     if (conn) await conn.end();
@@ -1324,7 +1405,7 @@ app.get('/produtos/exportar.csv', exigirAutenticacao, async (req, res) => {
     res.attachment(`produtos_${data}.csv`);
     res.type('text/csv; charset=utf-8').send(`\uFEFF${linhas.join('\r\n')}`);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar produtos]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar produtos');
     res.status(500).send('Não foi possível exportar os produtos.');
   } finally {
     if (conn) await conn.end();
@@ -1339,7 +1420,7 @@ app.get('/produtos/novo', exigirAutenticacao, async (req, res) => {
     const produto = { codigoBarras: typeof req.query.codigoBarras === 'string' ? req.query.codigoBarras : '' };
     return renderizarFormularioProduto(res, produto, '', 200, totalProdutos);
   } catch (err) {
-    console.error('[ERRO MySQL ao abrir cadastro de produto]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao abrir cadastro de produto');
     return res.status(500).send('Não foi possível abrir o cadastro de produtos.');
   } finally {
     if (conn) await conn.end();
@@ -1358,7 +1439,7 @@ app.get('/produtos/:id/editar', exigirAutenticacao, async (req, res) => {
     const totalProdutos = await contarProdutos(conn);
     return renderizarFormularioProduto(res, produtoParaView(registros[0]), '', 200, totalProdutos);
   } catch (err) {
-    console.error('[ERRO MySQL ao carregar edição de produto]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao carregar edição de produto');
     return res.status(500).send('Não foi possível carregar o produto.');
   } finally {
     if (conn) await conn.end();
@@ -1398,7 +1479,7 @@ app.post('/produtos', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioProduto(res, produto, 'Código, código de barras ou SKU já cadastrado.', 409);
     }
-    console.error('[ERRO MySQL ao criar produto]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao criar produto');
     return renderizarFormularioProduto(res, produto, 'Não foi possível salvar o produto.', 500);
   } finally {
     if (conn) await conn.end();
@@ -1443,7 +1524,7 @@ app.post('/produtos/:id', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioProduto(res, { ...produto, id }, 'Código, código de barras ou SKU já cadastrado em outro produto.', 409);
     }
-    console.error('[ERRO MySQL ao atualizar produto]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao atualizar produto');
     return renderizarFormularioProduto(res, { ...(req.body || {}), id }, 'Não foi possível atualizar o produto.', 500);
   } finally {
     if (conn) await conn.end();
@@ -1461,7 +1542,7 @@ app.post('/produtos/:id/excluir', exigirAutenticacao, async (req, res) => {
     if (resultado.affectedRows === 0) return res.status(404).send('Produto não encontrado.');
     return res.redirect('/produtos?mensagem=Produto%20exclu%C3%ADdo%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao excluir produto]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao excluir produto');
     return res.status(500).send('Não foi possível excluir o produto.');
   } finally {
     if (conn) await conn.end();
@@ -1476,7 +1557,7 @@ app.get('/api/produtos', exigirAutenticacao, async (req, res) => {
     const produtos = await consultarProdutos(conn, busca, true);
     res.json(produtos);
   } catch (err) {
-    console.error('[ERRO MySQL na API /api/produtos]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na API /api/produtos');
     res.status(500).json({ erro: 'Não foi possível carregar os produtos.' });
   } finally {
     if (conn) await conn.end();
@@ -1584,7 +1665,7 @@ app.get('/orcamentos', exigirAutenticacao, async (req, res) => {
       formatarMoeda: formatarMoedaProduto
     });
   } catch (err) {
-    console.error('[ERRO MySQL na rota /orcamentos]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /orcamentos');
     res.status(500).send('Não foi possível carregar os orçamentos.');
   } finally {
     if (conn) await conn.end();
@@ -1623,7 +1704,7 @@ app.get('/orcamentos/exportar.json', exigirAutenticacao, async (req, res) => {
     res.attachment(`orcamentos_${new Date().toISOString().slice(0, 10)}.json`);
     res.json(exportacao);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar orçamentos JSON]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar orçamentos JSON');
     res.status(500).send('Não foi possível exportar os orçamentos.');
   } finally {
     if (conn) await conn.end();
@@ -1646,7 +1727,7 @@ app.get('/orcamentos/exportar.csv', exigirAutenticacao, async (req, res) => {
     res.attachment(`orcamentos_${new Date().toISOString().slice(0, 10)}.csv`);
     res.type('text/csv; charset=utf-8').send(`\uFEFF${linhas.join('\r\n')}`);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar orçamentos CSV]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar orçamentos CSV');
     res.status(500).send('Não foi possível exportar os orçamentos.');
   } finally {
     if (conn) await conn.end();
@@ -1659,7 +1740,7 @@ app.get('/orcamentos/novo', exigirAutenticacao, async (req, res) => {
     conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME });
     return renderizarFormularioOrcamento(res, null, '', 200, await contarOrcamentos(conn));
   } catch (err) {
-    console.error('[ERRO MySQL ao abrir cadastro de orçamento]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao abrir cadastro de orçamento');
     return res.status(500).send('Não foi possível abrir o cadastro de orçamentos.');
   } finally {
     if (conn) await conn.end();
@@ -1677,7 +1758,7 @@ app.get('/orcamentos/:id/editar', exigirAutenticacao, async (req, res) => {
     if (!orcamento) return res.status(404).send('Orçamento não encontrado.');
     return renderizarFormularioOrcamento(res, orcamento, '', 200, await contarOrcamentos(conn));
   } catch (err) {
-    console.error('[ERRO MySQL ao carregar edição de orçamento]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao carregar edição de orçamento');
     return res.status(500).send('Não foi possível carregar o orçamento.');
   } finally {
     if (conn) await conn.end();
@@ -1716,7 +1797,7 @@ app.post('/orcamentos', exigirAutenticacao, async (req, res) => {
     return res.redirect(redirect);
   } catch (err) {
     if (transacaoIniciada) await conn.rollback();
-    console.error('[ERRO MySQL ao criar orçamento]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao criar orçamento');
     return responderErroOrcamento(req, res, orcamento, 'Não foi possível salvar o orçamento.', 500);
   } finally {
     if (conn) await conn.end();
@@ -1771,7 +1852,7 @@ app.post('/orcamentos/:id', exigirAutenticacao, async (req, res) => {
     return res.redirect(redirect);
   } catch (err) {
     if (transacaoIniciada) await conn.rollback();
-    console.error('[ERRO MySQL ao atualizar orçamento]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao atualizar orçamento');
     return responderErroOrcamento(req, res, req.body || {}, 'Não foi possível atualizar o orçamento.', 500);
   } finally {
     if (conn) await conn.end();
@@ -1789,7 +1870,7 @@ app.post('/orcamentos/:id/excluir', exigirAutenticacao, async (req, res) => {
     if (resultado.affectedRows === 0) return res.status(404).send('Orçamento não encontrado.');
     return res.redirect('/orcamentos?mensagem=Or%C3%A7amento%20exclu%C3%ADdo%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao excluir orçamento]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao excluir orçamento');
     return res.status(500).send('Não foi possível excluir o orçamento.');
   } finally {
     if (conn) await conn.end();
@@ -1804,7 +1885,7 @@ app.get('/api/orcamentos', exigirAutenticacao, async (req, res) => {
     const orcamentos = await consultarOrcamentos(conn, busca);
     res.json(orcamentos);
   } catch (err) {
-    console.error('[ERRO MySQL na API /api/orcamentos]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na API /api/orcamentos');
     res.status(500).json({ erro: 'Não foi possível carregar os orçamentos.' });
   } finally {
     if (conn) await conn.end();
@@ -1907,7 +1988,7 @@ app.get('/os', exigirAutenticacao, async (req, res) => {
       formatarMoeda: formatarMoedaProduto
     });
   } catch (err) {
-    console.error('[ERRO MySQL na rota /os]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /os');
     res.status(500).send('Não foi possível carregar as ordens de serviço.');
   } finally {
     if (conn) await conn.end();
@@ -1938,7 +2019,7 @@ app.get('/os/exportar.csv', exigirAutenticacao, async (req, res) => {
     res.attachment(`ordens_servico_${new Date().toISOString().slice(0, 10)}.csv`);
     res.type('text/csv; charset=utf-8').send(`\uFEFF${linhas.join('\r\n')}`);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar ordens de serviço]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar ordens de serviço');
     res.status(500).send('Não foi possível exportar as ordens de serviço.');
   } finally {
     if (conn) await conn.end();
@@ -1951,7 +2032,7 @@ app.get('/os/novo', exigirAutenticacao, async (req, res) => {
     conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME });
     return renderizarFormularioOrdemServico(res, null, '', 200, await contarOrdensServico(conn));
   } catch (err) {
-    console.error('[ERRO MySQL ao abrir cadastro de ordem de serviço]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao abrir cadastro de ordem de serviço');
     return res.status(500).send('Não foi possível abrir o cadastro de ordens de serviço.');
   } finally {
     if (conn) await conn.end();
@@ -1969,7 +2050,7 @@ app.get('/os/:id/editar', exigirAutenticacao, async (req, res) => {
     if (!ordem) return res.status(404).send('Ordem de serviço não encontrada.');
     return renderizarFormularioOrdemServico(res, ordem, '', 200, await contarOrdensServico(conn));
   } catch (err) {
-    console.error('[ERRO MySQL ao carregar ordem de serviço]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao carregar ordem de serviço');
     return res.status(500).send('Não foi possível carregar a ordem de serviço.');
   } finally {
     if (conn) await conn.end();
@@ -1999,7 +2080,7 @@ app.post('/os', exigirAutenticacao, async (req, res) => {
     );
     return res.redirect('/os?mensagem=Ordem%20de%20servi%C3%A7o%20cadastrada%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao criar ordem de serviço]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao criar ordem de serviço');
     return renderizarFormularioOrdemServico(res, ordem, 'Não foi possível salvar a ordem de serviço.', 500);
   } finally {
     if (conn) await conn.end();
@@ -2037,7 +2118,7 @@ app.post('/os/:id', exigirAutenticacao, async (req, res) => {
     }
     return res.redirect('/os?mensagem=Ordem%20de%20servi%C3%A7o%20atualizada%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao atualizar ordem de serviço]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao atualizar ordem de serviço');
     return renderizarFormularioOrdemServico(res, { ...ordem, id }, 'Não foi possível atualizar a ordem de serviço.', 500);
   } finally {
     if (conn) await conn.end();
@@ -2055,7 +2136,7 @@ app.post('/os/:id/excluir', exigirAutenticacao, async (req, res) => {
     if (resultado.affectedRows === 0) return res.status(404).send('Ordem de serviço não encontrada.');
     return res.redirect('/os?mensagem=Ordem%20de%20servi%C3%A7o%20exclu%C3%ADda%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao excluir ordem de serviço]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao excluir ordem de serviço');
     return res.status(500).send('Não foi possível excluir a ordem de serviço.');
   } finally {
     if (conn) await conn.end();
@@ -2141,7 +2222,7 @@ app.get('/fornecedores', exigirAutenticacao, async (req, res) => {
       formatarDataBR: formatarDataBRFornecedor
     });
   } catch (err) {
-    console.error('[ERRO MySQL na rota /fornecedores]:', err.message);
+    req.log.error({ err }, 'Erro MySQL na rota /fornecedores');
     res.status(500).send('Não foi possível carregar os fornecedores.');
   } finally {
     if (conn) await conn.end();
@@ -2175,7 +2256,7 @@ app.get('/fornecedores/exportar.csv', exigirAutenticacao, async (req, res) => {
     res.attachment(`fornecedores_${data}.csv`);
     res.type('text/csv; charset=utf-8').send(`\uFEFF${linhas.join('\r\n')}`);
   } catch (err) {
-    console.error('[ERRO MySQL ao exportar fornecedores]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao exportar fornecedores');
     res.status(500).send('Não foi possível exportar os fornecedores.');
   } finally {
     if (conn) await conn.end();
@@ -2206,7 +2287,7 @@ app.get('/fornecedores/:id/editar', exigirAutenticacao, async (req, res) => {
     if (registros.length === 0) return res.status(404).send('Fornecedor não encontrado.');
     renderizarFormularioFornecedor(res, fornecedorParaView(registros[0]), '');
   } catch (err) {
-    console.error('[ERRO MySQL ao carregar edição de fornecedor]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao carregar edição de fornecedor');
     res.status(500).send('Não foi possível carregar o fornecedor.');
   } finally {
     if (conn) await conn.end();
@@ -2230,7 +2311,7 @@ app.post('/fornecedores', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioFornecedor(res, fornecedor, 'Já existe um fornecedor cadastrado com esse CNPJ.', 409);
     }
-    console.error('[ERRO MySQL ao criar fornecedor]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao criar fornecedor');
     return renderizarFormularioFornecedor(res, fornecedor, 'Não foi possível salvar o fornecedor.', 500);
   } finally {
     if (conn) await conn.end();
@@ -2280,7 +2361,7 @@ app.post('/fornecedores/:id', exigirAutenticacao, async (req, res) => {
     if (err.code === 'ER_DUP_ENTRY') {
       return renderizarFormularioFornecedor(res, { ...fornecedor, id }, 'Já existe outro fornecedor cadastrado com esse CNPJ.', 409);
     }
-    console.error('[ERRO MySQL ao atualizar fornecedor]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao atualizar fornecedor');
     return renderizarFormularioFornecedor(res, { ...(req.body || {}), id }, 'Não foi possível atualizar o fornecedor.', 500);
   } finally {
     if (conn) await conn.end();
@@ -2298,7 +2379,7 @@ app.post('/fornecedores/:id/excluir', exigirAutenticacao, async (req, res) => {
     if (resultado.affectedRows === 0) return res.status(404).send('Fornecedor não encontrado.');
     return res.redirect('/fornecedores?mensagem=Fornecedor%20exclu%C3%ADdo%20com%20sucesso');
   } catch (err) {
-    console.error('[ERRO MySQL ao excluir fornecedor]:', err.message);
+    req.log.error({ err }, 'Erro MySQL ao excluir fornecedor');
     return res.status(500).send('Não foi possível excluir o fornecedor.');
   } finally {
     if (conn) await conn.end();
@@ -2309,13 +2390,10 @@ app.post('/fornecedores/:id/excluir', exigirAutenticacao, async (req, res) => {
 inicializarBanco()
   .then(() => {
     app.listen(PORT, HOST, () => {
-      console.log('========================================================');
-      console.log(`  FullTime Technology rodando em: http://${HOST}:${PORT}`);
-      console.log(`  Banco MySQL "${DB_NAME}" conectado e pronto!`);
-      console.log('========================================================');
+      logger.info(`FullTime Technology rodando em: http://${HOST}:${PORT}`);
+      logger.info(`Banco MySQL "${DB_NAME}" conectado e pronto!`);
     });
   })
   .catch((err) => {
-    console.error('[ERRO CRÍTICO] Falha ao iniciar o banco MySQL:', err.message);
-    console.error('Verifique se a janela "MySQL Server Portatil" está aberta.');
+    logger.fatal({ err }, 'Falha crítica ao iniciar o banco MySQL. Verifique se o MySQL Server Portatil está aberto.');
   });

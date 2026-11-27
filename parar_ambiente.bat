@@ -2,12 +2,6 @@
 setlocal
 title FullTime Node - Encerrando Ambiente Portavel
 
-rem Codigos ANSI: somente as mensagens de erro/aviso ficam em vermelho.
-set "ESC="
-for /f %%E in ('echo prompt $E ^| cmd') do set "ESC=%%E"
-set "RED=%ESC%[91m"
-set "RST=%ESC%[0m"
-
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 if exist "%SCRIPT_DIR%\server.js" (
@@ -25,42 +19,55 @@ set "NODE_DIR=%DEV_DIR%\nodejs"
 set "NODE_PID_DIR=%PROJECT_DIR%\logs\runtime"
 set "ERRORS=0"
 
-echo ========================================================
-echo   ENCERRANDO AMBIENTE PORTAVEL - FULLTIME NODE
-echo ========================================================
+rem Gera o caractere ESC (ASCII 27) de forma nativa e define as cores ANSI
+set "ESC="
+for /f %%E in ('echo prompt $E ^| cmd') do set "ESC=%%E"
+set "VERMELHO=%ESC%[91m"
+set "VERDE=%ESC%[92m"
+set "AMARELO=%ESC%[93m"
+set "CIANO=%ESC%[96m"
+set "MAGENTA=%ESC%[95m"
+set "CINZA=%ESC%[90m"
+set "NEGRITO=%ESC%[1m"
+set "RESET=%ESC%[0m"
+
+echo %CIANO%========================================================%RESET%
+echo %NEGRITO%  ENCERRANDO AMBIENTE PORTAVEL - FULLTIME NODE%RESET%
+echo %CIANO%========================================================%RESET%
 echo.
 
-echo [1/3] Encerrando NGINX...
+echo %MAGENTA%[1/3]%RESET% %NEGRITO%Encerrando NGINX...%RESET%
 call :stop_nginx
 if errorlevel 1 set "ERRORS=1"
 
-echo [2/3] Encerrando instancias do Node.js (fulltime-node)...
+echo %MAGENTA%[2/3]%RESET% %NEGRITO%Encerrando instancias do Node.js ^(fulltime-node^)...%RESET%
 for %%P in (3001 3002 3003 3004) do (
     call :stop_node_port %%P
     if errorlevel 1 set "ERRORS=1"
 )
 
-echo [3/3] Encerrando MySQL Portatil...
+echo %MAGENTA%[3/3]%RESET% %NEGRITO%Encerrando MySQL Portatil...%RESET%
 call :stop_mysql
 if errorlevel 1 set "ERRORS=1"
 
 echo.
-echo ========================================================
 if "%ERRORS%"=="0" (
-    echo   Servicos do ambiente encerrados.
+    echo %VERDE%========================================================%RESET%
+    echo %NEGRITO%%VERDE%  Servicos do ambiente encerrados.%RESET%
+    echo %VERDE%========================================================%RESET%
 ) else (
-    echo %RED%  [ERRO] Alguns servicos nao puderam ser encerrados.%RST%
+    echo %VERMELHO%========================================================%RESET%
+    echo %VERMELHO%  [ERRO] Alguns servicos nao puderam ser encerrados.%RESET%
+    echo %VERMELHO%========================================================%RESET%
 )
-echo ========================================================
 echo.
 pause
 exit /b %ERRORS%
-
 :stop_nginx
 if not exist "%NGINX_PID_FILE%" (
     call :recover_nginx_pid
     if errorlevel 1 (
-        echo [INFO] Nenhum processo NGINX desta instalacao foi encontrado.
+        echo %CIANO%[INFO]%RESET% Nenhum processo NGINX desta instalacao foi encontrado.
         exit /b 0
     )
 )
@@ -79,45 +86,45 @@ for /l %%I in (1,1,5) do (
     call :is_nginx_pid_running
     if errorlevel 1 (
         del "%NGINX_PID_FILE%" >nul 2>&1
-        echo [OK] NGINX encerrado.
+        echo %VERDE%[OK]%RESET% NGINX encerrado.
         exit /b 0
     )
     timeout /t 1 /nobreak >nul
 )
 
-echo %RED%[AVISO] O NGINX nao encerrou graciosamente; finalizando apenas o PID %NGINX_PID%.%RST%
+echo %AMARELO%[AVISO]%RESET% O NGINX nao encerrou graciosamente; finalizando apenas o PID %NEGRITO%%NGINX_PID%%RESET%.
 call :is_nginx_pid_running
 if errorlevel 1 (
     del "%NGINX_PID_FILE%" >nul 2>&1
-    echo [OK] NGINX encerrado.
+    echo %VERDE%[OK]%RESET% NGINX encerrado.
     exit /b 0
 )
 taskkill /F /T /PID %NGINX_PID% >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[ERRO] Nao foi possivel encerrar o processo NGINX %NGINX_PID%.%RST%
+    echo %VERMELHO%[ERRO]%RESET% Nao foi possivel encerrar o processo NGINX %NEGRITO%%NGINX_PID%%RESET%.
     exit /b 1
 )
 call :is_nginx_pid_running
 if not errorlevel 1 (
-    echo %RED%[ERRO] O processo NGINX %NGINX_PID% continua ativo.%RST%
+    echo %VERMELHO%[ERRO]%RESET% O processo NGINX %NEGRITO%%NGINX_PID%%RESET% continua ativo.
     exit /b 1
 )
 del "%NGINX_PID_FILE%" >nul 2>&1
-echo [OK] NGINX encerrado.
+echo %VERDE%[OK]%RESET% NGINX encerrado.
 exit /b 0
 
 :recover_stale_nginx_pid
 del "%NGINX_PID_FILE%" >nul 2>&1
 call :recover_nginx_pid
 if errorlevel 1 (
-    echo [INFO] PID antigo removido; nenhum NGINX desta instalacao foi encontrado.
+    echo %CIANO%[INFO]%RESET% PID antigo removido; nenhum NGINX desta instalacao foi encontrado.
     exit /b 0
 )
 set "NGINX_PID="
 for /f "usebackq tokens=1" %%I in ("%NGINX_PID_FILE%") do set "NGINX_PID=%%I"
 call :is_nginx_pid_running
 if errorlevel 1 (
-    echo %RED%[ERRO] Nao foi possivel validar o PID recuperado do NGINX.%RST%
+    echo %VERMELHO%[ERRO]%RESET% Nao foi possivel validar o PID recuperado do NGINX.
     exit /b 1
 )
 goto :stop_nginx_with_pid
@@ -138,7 +145,7 @@ call :is_nginx_pid_running
 if errorlevel 1 exit /b 1
 >"%NGINX_PID_FILE%" echo %NGINX_PID%
 if errorlevel 1 exit /b 1
-echo [INFO] PID do processo principal do NGINX recuperado.
+echo %CIANO%[INFO]%RESET% PID do processo principal do NGINX recuperado.
 exit /b 0
 
 :is_nginx_pid_running
@@ -147,7 +154,6 @@ if errorlevel 1 exit /b 1
 powershell.exe -NoProfile -Command "$p = Get-CimInstance Win32_Process -Filter 'ProcessId=%NGINX_PID%'; if ($p -and $p.ExecutablePath -ieq '%NGINX_EXE%') { exit 0 } else { exit 1 }" >nul 2>&1
 if errorlevel 1 exit /b 1
 exit /b 0
-
 :stop_node_port
 set "TARGET_PORT=%~1"
 set "NODE_PORT_PID_FILE=%NODE_PID_DIR%\node-%TARGET_PORT%.pid"
@@ -160,7 +166,7 @@ if exist "%NODE_PORT_PID_FILE%" (
         if not errorlevel 1 goto :stop_node_supervisor
         tasklist /FI "PID eq %NODE_SUPERVISOR_PID%" | findstr /R /C:"[ ]%NODE_SUPERVISOR_PID%$" >nul
         if not errorlevel 1 (
-            echo %RED%[AVISO] PID %NODE_SUPERVISOR_PID% nao corresponde ao supervisor FullTime da porta %TARGET_PORT%; processo deixado ativo.%RST%
+            echo %AMARELO%[AVISO]%RESET% PID %NEGRITO%%NODE_SUPERVISOR_PID%%RESET% nao corresponde ao supervisor FullTime da porta %NEGRITO%%TARGET_PORT%%RESET%; processo deixado ativo.
         )
     )
     del "%NODE_PORT_PID_FILE%" >nul 2>&1
@@ -170,19 +176,19 @@ goto :stop_legacy_node_port
 :stop_node_supervisor
 taskkill /F /T /PID %NODE_SUPERVISOR_PID% >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[ERRO] Nao foi possivel encerrar o supervisor Node PID %NODE_SUPERVISOR_PID% da porta %TARGET_PORT%.%RST%
+    echo %VERMELHO%[ERRO]%RESET% Nao foi possivel encerrar o supervisor Node PID %NEGRITO%%NODE_SUPERVISOR_PID%%RESET% da porta %NEGRITO%%TARGET_PORT%%RESET%.
     exit /b 1
 )
 for /l %%I in (1,1,5) do (
     call :is_node_supervisor_running
     if errorlevel 1 (
         del "%NODE_PORT_PID_FILE%" >nul 2>&1
-        echo [OK] Node e npm/nodemon da porta %TARGET_PORT% encerrados.
+        echo %VERDE%[OK]%RESET% Node e npm/nodemon da porta %NEGRITO%%TARGET_PORT%%RESET% encerrados.
         exit /b 0
     )
     timeout /t 1 /nobreak >nul
 )
-echo %RED%[ERRO] O supervisor Node PID %NODE_SUPERVISOR_PID% continua ativo.%RST%
+echo %VERMELHO%[ERRO]%RESET% O supervisor Node PID %NEGRITO%%NODE_SUPERVISOR_PID%%RESET% continua ativo.
 exit /b 1
 
 :is_node_supervisor_running
@@ -212,18 +218,18 @@ set "NODE_TARGET_PID="
 if exist "%NODE_TARGET_FILE%" set /p "NODE_TARGET_PID="<"%NODE_TARGET_FILE%"
 del "%NODE_TARGET_FILE%" >nul 2>&1
 if not defined NODE_TARGET_PID (
-    echo %RED%[AVISO] PID %NODE_PID% na porta %TARGET_PORT% nao foi identificado como FullTime Node; deixado ativo.%RST%
+    echo %AMARELO%[AVISO]%RESET% PID %NEGRITO%%NODE_PID%%RESET% na porta %NEGRITO%%TARGET_PORT%%RESET% nao foi identificado como FullTime Node; deixado ativo.
     exit /b 1
 )
 taskkill /F /T /PID %NODE_TARGET_PID% >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[ERRO] Nao foi possivel encerrar o Node PID %NODE_TARGET_PID%.%RST%
+    echo %VERMELHO%[ERRO]%RESET% Nao foi possivel encerrar o Node PID %NEGRITO%%NODE_TARGET_PID%%RESET%.
     exit /b 1
 )
 if "%NODE_TARGET_PID%"=="%NODE_PID%" (
-    echo [OK] FullTime Node PID %NODE_PID% encerrado.
+    echo %VERDE%[OK]%RESET% FullTime Node PID %NEGRITO%%NODE_PID%%RESET% encerrado.
 ) else (
-    echo [OK] FullTime Node ^(nodemon PID %NODE_TARGET_PID%^) da porta %TARGET_PORT% encerrado.
+    echo %VERDE%[OK]%RESET% FullTime Node ^(nodemon PID %NEGRITO%%NODE_TARGET_PID%%RESET%^) da porta %NEGRITO%%TARGET_PORT%%RESET% encerrado.
 )
 exit /b 0
 
@@ -243,14 +249,14 @@ tasklist /FI "IMAGENAME eq mysqld.exe" /FI "PID eq %MYSQL_PID%" | findstr /I /C:
 if errorlevel 1 exit /b 0
 powershell.exe -NoProfile -Command "$p = Get-CimInstance Win32_Process -Filter 'ProcessId=%MYSQL_PID%'; if ($p -and $p.ExecutablePath -ieq '%MYSQL_DIR%\bin\mysqld.exe') { exit 0 } else { exit 1 }" >nul 2>&1
 if errorlevel 1 (
-    echo [INFO] MySQL PID %MYSQL_PID% nao pertence ao MySQL portatil; deixado ativo.
+    echo %CINZA%[INFO] MySQL PID %MYSQL_PID% nao pertence ao MySQL portatil; deixado ativo.%RESET%
     exit /b 0
 )
 set "MYSQL_STOP_REQUESTED=1"
 "%MYSQL_DIR%\bin\mysqladmin.exe" -h 127.0.0.1 -u root shutdown >nul 2>&1
 if errorlevel 1 (
-    echo %RED%[ERRO] Nao foi possivel solicitar o encerramento do MySQL PID %MYSQL_PID%.%RST%
+    echo %VERMELHO%[ERRO]%RESET% Nao foi possivel solicitar o encerramento do MySQL PID %NEGRITO%%MYSQL_PID%%RESET%.
     exit /b 1
 )
-echo [OK] Encerramento solicitado ao MySQL PID %MYSQL_PID%.
+echo %VERDE%[OK]%RESET% Encerramento solicitado ao MySQL PID %NEGRITO%%MYSQL_PID%%RESET%.
 exit /b 0
