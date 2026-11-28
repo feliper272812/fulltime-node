@@ -11,5 +11,11 @@
     "*.ejs": "html"
   },
   "html.validate.scripts": false,
-  "html.validate.styles": false
+  "html.validate.styles": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "prettier.singleQuote": true,
+  "prettier.tabWidth": 2,
+  "prettier.semi": true,
+  "prettier.printWidth": 100
 }

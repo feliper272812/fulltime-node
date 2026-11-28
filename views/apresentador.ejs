@@ -35,55 +35,61 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
     <!-- ///////////////////////////////////////////////////////// -->
 
     <script>
-        (() => {
-            const getStoredTheme = () => localStorage.getItem('theme');
-            const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const resolveTheme = (tema) => tema === 'auto' ? getSystemTheme() : tema;
-            document.documentElement.setAttribute('data-bs-theme', resolveTheme(getStoredTheme() || 'auto'));
-        })();
+      (() => {
+        const getStoredTheme = () => localStorage.getItem('theme');
+        const getSystemTheme = () =>
+          window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const resolveTheme = (tema) => (tema === 'auto' ? getSystemTheme() : tema);
+        document.documentElement.setAttribute(
+          'data-bs-theme',
+          resolveTheme(getStoredTheme() || 'auto'),
+        );
+      })();
     </script>
 
     <!-- BOOTSTRAP 5.3.3 CSS LOCAL -->
-    <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet">
+    <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet" />
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let cssCarregado = false;
-            for (let i = 0; i < document.styleSheets.length; i++) {
-                try {
-                    let sheet = document.styleSheets[i];
-                    if (sheet.href && sheet.href.indexOf("bootstrap.min.css") !== -1) {
-                        if (sheet.cssRules && sheet.cssRules.length > 0) {
-                            cssCarregado = true;
-                            break;
-                        }
-                    }
-                } catch (e) {
-                    // Captura restrições de segurança de CORS se houverem
-                }
+      document.addEventListener('DOMContentLoaded', function () {
+        let cssCarregado = false;
+        for (let i = 0; i < document.styleSheets.length; i++) {
+          try {
+            let sheet = document.styleSheets[i];
+            if (sheet.href && sheet.href.indexOf('bootstrap.min.css') !== -1) {
+              if (sheet.cssRules && sheet.cssRules.length > 0) {
+                cssCarregado = true;
+                break;
+              }
             }
+          } catch (e) {
+            // Captura restrições de segurança de CORS se houverem
+          }
+        }
 
-            if (!cssCarregado) {
-                alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
-                console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+        if (!cssCarregado) {
+          alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+          console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
 
-                let cdn = document.createElement("link");
-                cdn.rel = "stylesheet";
-                cdn.href = "https://jsdelivr.net";
-                cdn.integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH";
-                cdn.crossOrigin = "anonymous";
-                document.head.appendChild(cdn);
-            }
-        });
+          let cdn = document.createElement('link');
+          cdn.rel = 'stylesheet';
+          cdn.href = 'https://jsdelivr.net';
+          cdn.integrity = 'sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH';
+          cdn.crossOrigin = 'anonymous';
+          document.head.appendChild(cdn);
+        }
+      });
     </script>
 
     <style>
-      html, body {
+      html,
+      body {
         height: 100%;
         overflow: hidden;
       }
       @media (max-width: 991.98px) {
-        html, body {
+        html,
+        body {
           height: auto;
           overflow: auto;
         }
@@ -156,7 +162,10 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
         color: var(--bs-secondary-color);
         font-size: 0.8rem;
         cursor: pointer;
-        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+        transition:
+          border-color 0.15s ease,
+          color 0.15s ease,
+          background-color 0.15s ease;
       }
       .drop-zone:hover,
       .drop-zone.over {
@@ -189,7 +198,6 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
     </style>
   </head>
   <body>
-
     <!-- //////////////////////////////////////////////////////////////////////////////////-->
     <!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR) /////////////////////////////////// -->
     <!-- //////////////////////////////////////////////////////////////////////////////////-->
@@ -198,18 +206,28 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
     <!-- ///////////////////////////////////////////////////////////////////////////////// -->
 
     <main class="container-fluid px-3 app-shell">
-      <hr class="my-1 opacity-25">
+      <hr class="my-1 opacity-25" />
 
       <!-- BARRA SUPERIOR DE CONTROLES DA APRESENTAÇÃO -->
       <div class="card shadow-sm mb-2 flex-shrink-0">
         <div class="card-body py-1 px-3 d-flex flex-wrap align-items-center gap-2">
           <h1 class="h6 mb-0 me-2 fw-semibold text-success-emphasis">Apresentador</h1>
 
-          <button id="bScr" type="button" class="btn btn-outline-success btn-sm tx-only">Compartilhar tela / janela</button>
-          <button id="bCam" type="button" class="btn btn-outline-success btn-sm tx-only">Câmera</button>
-          <button id="bMic" type="button" class="btn btn-outline-success btn-sm tx-only">Microfone</button>
-          <button id="bRec" type="button" class="btn btn-outline-danger btn-sm tx-only">Gravar</button>
-          <button id="bNewTab" type="button" class="btn btn-outline-primary btn-sm tx-only">🪟 Abrir Aba Cliente</button>
+          <button id="bScr" type="button" class="btn btn-outline-success btn-sm tx-only">
+            Compartilhar tela / janela
+          </button>
+          <button id="bCam" type="button" class="btn btn-outline-success btn-sm tx-only">
+            Câmera
+          </button>
+          <button id="bMic" type="button" class="btn btn-outline-success btn-sm tx-only">
+            Microfone
+          </button>
+          <button id="bRec" type="button" class="btn btn-outline-danger btn-sm tx-only">
+            Gravar
+          </button>
+          <button id="bNewTab" type="button" class="btn btn-outline-primary btn-sm tx-only">
+            🪟 Abrir Aba Cliente
+          </button>
           <span id="roomBadge" class="badge text-bg-secondary">Sala: 0 convidados</span>
 
           <div class="ms-auto d-flex align-items-center gap-2">
@@ -217,29 +235,42 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
               <option value="1280x720">720p</option>
               <option value="1920x1080">1080p</option>
             </select>
-            <button id="bFs" type="button" class="btn btn-outline-secondary btn-sm">Tela cheia</button>
+            <button id="bFs" type="button" class="btn btn-outline-secondary btn-sm">
+              Tela cheia
+            </button>
           </div>
         </div>
       </div>
 
       <!-- ALERTA DE MENSAGENS / ERROS -->
-      <div id="msg" class="alert alert-danger py-1 px-3 small mb-2 d-none flex-shrink-0" role="alert"></div>
+      <div
+        id="msg"
+        class="alert alert-danger py-1 px-3 small mb-2 d-none flex-shrink-0"
+        role="alert"
+      ></div>
 
       <!-- GRADE PRINCIPAL: PALCO ROLÁVEL + COLUNA DIREITA FIXA -->
       <div class="row g-2 align-items-start flex-grow-1 overflow-hidden">
-
         <!-- COLUNA ESQUERDA: SOMENTE ESTA JANELA TEM BARRA DE ROLAGEM -->
         <div class="col-12 col-lg-8 col-xl-9">
           <div class="stage-box shadow-sm">
-            <button id="backLive" type="button" class="btn btn-dark btn-sm border-light-subtle" hidden>Voltar ao ao vivo</button>
-            <button id="unmuteBtn" type="button" class="btn btn-warning btn-sm" hidden>🔊 Ativar som</button>
+            <button
+              id="backLive"
+              type="button"
+              class="btn btn-dark btn-sm border-light-subtle"
+              hidden
+            >
+              Voltar ao ao vivo
+            </button>
+            <button id="unmuteBtn" type="button" class="btn btn-warning btn-sm" hidden>
+              🔊 Ativar som
+            </button>
             <canvas id="cv" width="1280" height="720"></canvas>
             <video id="rv" class="r" autoplay muted playsinline controls></video>
           </div>
         </div>
         <!-- COLUNA DIREITA: FIXA NA TELA -->
         <div class="col-12 col-lg-4 col-xl-3 side-panel">
-
           <!-- CARD TRANSMISSOR / SALA EM GRUPO COMPACTO -->
           <section id="secTx" class="card shadow-sm mb-2">
             <div class="card-body p-2">
@@ -247,18 +278,29 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
                 <h2 class="small fw-semibold mb-0">Transmitir (1x1 ou Grupo)</h2>
                 <span id="st" class="badge text-bg-secondary">Sem conexão</span>
               </div>
-              <p class="text-body-secondary mb-2" style="font-size: 0.72rem; line-height: 1.2;">
+              <p class="text-body-secondary mb-2" style="font-size: 0.72rem; line-height: 1.2">
                 Gere convite para cada convidado (automático em abas locais).
               </p>
 
               <div class="input-group input-group-sm mb-1">
                 <button id="bOffer" type="button" class="btn btn-success">1. Convite</button>
-                <textarea id="offer" class="form-control sdp-box" placeholder="Convite gerado (+1 pessoa)" readonly></textarea>
-                <button type="button" class="btn btn-outline-secondary cp" data-t="offer">Copiar</button>
+                <textarea
+                  id="offer"
+                  class="form-control sdp-box"
+                  placeholder="Convite gerado (+1 pessoa)"
+                  readonly
+                ></textarea>
+                <button type="button" class="btn btn-outline-secondary cp" data-t="offer">
+                  Copiar
+                </button>
               </div>
 
               <div class="input-group input-group-sm">
-                <textarea id="ansIn" class="form-control sdp-box" placeholder="Cole a resposta do convidado"></textarea>
+                <textarea
+                  id="ansIn"
+                  class="form-control sdp-box"
+                  placeholder="Cole a resposta do convidado"
+                ></textarea>
                 <button id="bAns" type="button" class="btn btn-primary">2. Conectar</button>
               </div>
 
@@ -275,13 +317,24 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
               </div>
 
               <div class="input-group input-group-sm mb-1">
-                <textarea id="offIn" class="form-control sdp-box" placeholder="Cole o convite aqui"></textarea>
+                <textarea
+                  id="offIn"
+                  class="form-control sdp-box"
+                  placeholder="Cole o convite aqui"
+                ></textarea>
                 <button id="bJoin" type="button" class="btn btn-success">Entrar</button>
               </div>
 
               <div class="input-group input-group-sm">
-                <textarea id="ans" class="form-control sdp-box" placeholder="Resposta gerada" readonly></textarea>
-                <button type="button" class="btn btn-outline-secondary cp" data-t="ans">Copiar</button>
+                <textarea
+                  id="ans"
+                  class="form-control sdp-box"
+                  placeholder="Resposta gerada"
+                  readonly
+                ></textarea>
+                <button type="button" class="btn btn-outline-secondary cp" data-t="ans">
+                  Copiar
+                </button>
               </div>
             </div>
           </section>
@@ -291,32 +344,52 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
             <div class="card-body p-2 d-flex flex-column overflow-hidden">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <h2 class="small fw-semibold mb-0">Arquivos e Gravações</h2>
-                <button id="bSendLast" type="button" class="btn btn-success btn-sm py-0 px-2" style="font-size: 0.72rem;" hidden>Enviar gravação</button>
+                <button
+                  id="bSendLast"
+                  type="button"
+                  class="btn btn-success btn-sm py-0 px-2"
+                  style="font-size: 0.72rem"
+                  hidden
+                >
+                  Enviar gravação
+                </button>
               </div>
 
               <div class="drop-zone" id="drop" tabindex="0">Solte arquivos/gravações ou clique</div>
-              <input id="fi" type="file" multiple hidden>
+              <input id="fi" type="file" multiple hidden />
               <ul id="files" class="list-unstyled mb-0 mt-1 flex-grow-1"></ul>
             </div>
           </section>
-
         </div>
       </div>
     </main>
 
     <!-- BARRA FIXA INFERIOR DE CONTROLES DA CÂMERA (NO LUGAR DO FOOTER) -->
-    <footer class="footer fixed-bottom py-2 bg-body-tertiary border-top shadow-sm tx-only" id="camBar">
-      <div class="container-fluid px-3 d-flex flex-wrap align-items-center gap-3 small text-body-secondary">
+    <footer
+      class="footer fixed-bottom py-2 bg-body-tertiary border-top shadow-sm tx-only"
+      id="camBar"
+    >
+      <div
+        class="container-fluid px-3 d-flex flex-wrap align-items-center gap-3 small text-body-secondary"
+      >
         <label class="d-flex align-items-center gap-2 mb-0">
           <span>Tamanho da câmera</span>
-          <input id="sz" type="range" class="form-range" style="width: 120px;" min="10" max="45" value="20">
+          <input
+            id="sz"
+            type="range"
+            class="form-range"
+            style="width: 120px"
+            min="10"
+            max="45"
+            value="20"
+          />
         </label>
         <div class="form-check mb-0">
-          <input id="rd" class="form-check-input" type="checkbox" checked>
+          <input id="rd" class="form-check-input" type="checkbox" checked />
           <label class="form-check-label" for="rd">Redonda</label>
         </div>
         <div class="form-check mb-0">
-          <input id="mir" class="form-check-input" type="checkbox" checked>
+          <input id="mir" class="form-check-input" type="checkbox" checked />
           <label class="form-check-label" for="mir">Espelhar</label>
         </div>
         <span class="ms-md-auto">Arraste a câmera para mudar de lugar.</span>
@@ -326,576 +399,779 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
     <video id="scr" muted playsinline hidden></video>
     <video id="cam" muted playsinline hidden></video>
     <script>
-    const $=id=>document.getElementById(id);
-    const cv=$('cv'),ctx=cv.getContext('2d'),scr=$('scr'),cam=$('cam'),rv=$('rv');
-    const AC=new (window.AudioContext||window.webkitAudioContext)(),dest=AC.createMediaStreamDestination();
+      const $ = (id) => document.getElementById(id);
+      const cv = $('cv'),
+        ctx = cv.getContext('2d'),
+        scr = $('scr'),
+        cam = $('cam'),
+        rv = $('rv');
+      const AC = new (window.AudioContext || window.webkitAudioContext)(),
+        dest = AC.createMediaStreamDestination();
 
-    const silOsc=AC.createOscillator(),silGain=AC.createGain();
-    silGain.gain.value=0;silOsc.connect(silGain);silGain.connect(dest);silOsc.start();
+      const silOsc = AC.createOscillator(),
+        silGain = AC.createGain();
+      silGain.gain.value = 0;
+      silOsc.connect(silGain);
+      silGain.connect(dest);
+      silOsc.start();
 
-    let scrS,camS,micS,micN,rec,rchunks=[],tmr,t0,_o,lastRecording=null,frameTick=0;
-    const pip={x:.78,y:.66,show:false};
-    let box={x:0,y:0,w:0,h:0};
-    const msg=t=>{
-      const el=$('msg');
-      el.textContent=t||'';
-      el.classList.toggle('d-none',!t);
-    };
-    function draw(){
-      const W=cv.width,H=cv.height;
-      frameTick=(frameTick+1)%60;
-      ctx.fillStyle='#0f1620';ctx.fillRect(0,0,W,H);
-      if(scr.videoWidth){
-        const r=Math.min(W/scr.videoWidth,H/scr.videoHeight),w=scr.videoWidth*r,h=scr.videoHeight*r;
-        ctx.drawImage(scr,(W-w)/2,(H-h)/2,w,h);
-      }else{
-        ctx.fillStyle='#93a1b0';ctx.font=W/42+'px sans-serif';ctx.textAlign='center';
-        ctx.fillText('Clique em "Compartilhar tela / janela" (ou "Gravar") para escolher Desktop, Janela ou Guia',W/2,H/2);
-        ctx.fillStyle=frameTick<30?'#198754':'#1d2733';
-        ctx.fillRect(W-14,H-14,4,4);
-      }
-      box={x:0,y:0,w:0,h:0};
-      if(pip.show&&cam.videoWidth){
-        const s=$('sz').value/100*W,round=$('rd').checked,vw=cam.videoWidth,vh=cam.videoHeight;
-        const w=s,h=round?s:s*vh/vw;
-        const x=Math.min(Math.max(pip.x*W,0),W-w),y=Math.min(Math.max(pip.y*H,0),H-h);
-        box={x,y,w,h};
-        ctx.save();
-        ctx.beginPath();
-        if(round)ctx.arc(x+w/2,y+h/2,w/2,0,7);else ctx.roundRect(x,y,w,h,w*.06);
-        ctx.clip();
-        if($('mir').checked){ctx.translate(x+w,0);ctx.scale(-1,1);ctx.translate(-x,0)}
-        if(round){const sw=Math.min(vw,vh);ctx.drawImage(cam,(vw-sw)/2,(vh-sw)/2,sw,sw,x,y,w,h)}
-        else ctx.drawImage(cam,x,y,w,h);
-        ctx.restore();
-        ctx.lineWidth=Math.max(3,W/400);ctx.strokeStyle='#fff';ctx.beginPath();
-        if(round)ctx.arc(x+w/2,y+h/2,w/2,0,7);else ctx.roundRect(x,y,w,h,w*.06);
-        ctx.stroke();
-      }
-    }
-    const wk=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),33)'])));
-    wk.onmessage=draw;
-    draw();
-
-    /* Arrastar a câmera */
-    let drag=null;
-    const pt=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}};
-    const hit=p=>box.w&&p.x>=box.x&&p.x<=box.x+box.w&&p.y>=box.y&&p.y<=box.y+box.h;
-    cv.onpointerdown=e=>{const p=pt(e);if(hit(p)){drag={dx:p.x-box.x,dy:p.y-box.y};cv.setPointerCapture(e.pointerId)}};
-    cv.onpointermove=e=>{const p=pt(e);if(drag){pip.x=(p.x-drag.dx)/cv.width;pip.y=(p.y-drag.dy)/cv.height}cv.style.cursor=drag?'grabbing':hit(p)?'grab':'default'};
-    cv.onpointerup=()=>drag=null;
-    cv.onwheel=e=>{if(hit(pt(e))){e.preventDefault();$('sz').value=Math.min(45,Math.max(10,+$('sz').value-Math.sign(e.deltaY)*2))}};
-
-    /* Fluxo de saída: vídeo do canvas + áudio misturado (microfone e áudio da tela/sistema) */
-    const out=()=>_o||(_o=new MediaStream([...cv.captureStream(30).getVideoTracks(),...dest.stream.getAudioTracks()]));
-    const setOn=(id,on,cls='btn-success',offCls='btn-outline-success')=>{
-      const el=$(id);
-      el.classList.toggle(cls,on);
-      el.classList.toggle(offCls,!on);
-    };
-
-    async function stopScr(){
-      scrS?.getTracks().forEach(t=>t.stop());
-      scrS=null;scr.srcObject=null;
-      $('bScr').textContent='Compartilhar tela / janela';
-      setOn('bScr',false);
-    }
-
-    async function startScr(){
-      scrS=await navigator.mediaDevices.getDisplayMedia({
-        video:{frameRate:30,cursor:'always'},
-        audio:true,
-        surfaceSwitching:'include',
-        selfBrowserSurface:'exclude',
-        systemAudio:'include'
-      });
-      const vTrack=scrS.getVideoTracks()[0];
-      if(vTrack&&vTrack.getSettings?.().displaySurface==='browser'&&document.hasFocus()){
-        msg('Aviso: compartilhe uma janela diferente ou outro monitor/aba para evitar o efeito espelho infinito.');
-      }
-      scr.srcObject=scrS;
-      await scr.play();
-      if(scrS.getAudioTracks().length){
-        AC.createMediaStreamSource(new MediaStream(scrS.getAudioTracks())).connect(dest);
-      }
-      if(vTrack)vTrack.onended=stopScr;
-      $('bScr').textContent='Parar compartilhamento';
-      setOn('bScr',true);
-      anunciarSala();
-    }
-
-    $('bScr').onclick=async()=>{
-      await AC.resume();msg();
-      if(scrS)return stopScr();
-      try{
-        await startScr();
-      }catch(e){
-        scrS=null;
-        msg('Não foi possível compartilhar a tela/janela: '+e.message);
-      }
-    };
-
-    $('bCam').onclick=async()=>{
-      await AC.resume();msg();
-      if(camS){camS.getTracks().forEach(t=>t.stop());camS=null;pip.show=false;return setOn('bCam',false)}
-      try{
-        camS=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480}});
-        cam.srcObject=camS;await cam.play();pip.show=true;setOn('bCam',true);
-        anunciarSala();
-      }catch(e){camS=null;msg('Não foi possível abrir a câmera: '+e.message)}
-    };
-
-    $('bMic').onclick=async()=>{
-      await AC.resume();msg();
-      if(micS){micN.disconnect();micS.getTracks().forEach(t=>t.stop());micS=null;return setOn('bMic',false)}
-      try{
-        micS=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
-        micN=AC.createMediaStreamSource(micS);micN.connect(dest);setOn('bMic',true);
-        anunciarSala();
-      }catch(e){micS=null;msg('Não foi possível abrir o microfone: '+e.message)}
-    };
-    $('res').onchange=e=>{[cv.width,cv.height]=e.target.value.split('x').map(Number)};
-    $('bFs').onclick=()=>document.querySelector('.stage-box').requestFullscreen?.();
-
-    /* Gravação */
-    $('bRec').onclick=async()=>{
-      await AC.resume();msg();
-      if(rec){
-        if(rec.state==='recording')rec.requestData();
-        rec.stop();
-        return;
-      }
-
-      if(!scrS&&!camS){
-        try{
-          await startScr();
-        }catch(e){
-          scrS=null;
-          msg('Gravação cancelada: escolha uma tela, janela ou abra a câmera para gravar.');
-          return;
+      let scrS,
+        camS,
+        micS,
+        micN,
+        rec,
+        rchunks = [],
+        tmr,
+        t0,
+        _o,
+        lastRecording = null,
+        frameTick = 0;
+      const pip = { x: 0.78, y: 0.66, show: false };
+      let box = { x: 0, y: 0, w: 0, h: 0 };
+      const msg = (t) => {
+        const el = $('msg');
+        el.textContent = t || '';
+        el.classList.toggle('d-none', !t);
+      };
+      function draw() {
+        const W = cv.width,
+          H = cv.height;
+        frameTick = (frameTick + 1) % 60;
+        ctx.fillStyle = '#0f1620';
+        ctx.fillRect(0, 0, W, H);
+        if (scr.videoWidth) {
+          const r = Math.min(W / scr.videoWidth, H / scr.videoHeight),
+            w = scr.videoWidth * r,
+            h = scr.videoHeight * r;
+          ctx.drawImage(scr, (W - w) / 2, (H - h) / 2, w, h);
+        } else {
+          ctx.fillStyle = '#93a1b0';
+          ctx.font = W / 42 + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(
+            'Clique em "Compartilhar tela / janela" (ou "Gravar") para escolher Desktop, Janela ou Guia',
+            W / 2,
+            H / 2,
+          );
+          ctx.fillStyle = frameTick < 30 ? '#198754' : '#1d2733';
+          ctx.fillRect(W - 14, H - 14, 4, 4);
+        }
+        box = { x: 0, y: 0, w: 0, h: 0 };
+        if (pip.show && cam.videoWidth) {
+          const s = ($('sz').value / 100) * W,
+            round = $('rd').checked,
+            vw = cam.videoWidth,
+            vh = cam.videoHeight;
+          const w = s,
+            h = round ? s : (s * vh) / vw;
+          const x = Math.min(Math.max(pip.x * W, 0), W - w),
+            y = Math.min(Math.max(pip.y * H, 0), H - h);
+          box = { x, y, w, h };
+          ctx.save();
+          ctx.beginPath();
+          if (round) ctx.arc(x + w / 2, y + h / 2, w / 2, 0, 7);
+          else ctx.roundRect(x, y, w, h, w * 0.06);
+          ctx.clip();
+          if ($('mir').checked) {
+            ctx.translate(x + w, 0);
+            ctx.scale(-1, 1);
+            ctx.translate(-x, 0);
+          }
+          if (round) {
+            const sw = Math.min(vw, vh);
+            ctx.drawImage(cam, (vw - sw) / 2, (vh - sw) / 2, sw, sw, x, y, w, h);
+          } else ctx.drawImage(cam, x, y, w, h);
+          ctx.restore();
+          ctx.lineWidth = Math.max(3, W / 400);
+          ctx.strokeStyle = '#fff';
+          ctx.beginPath();
+          if (round) ctx.arc(x + w / 2, y + h / 2, w / 2, 0, 7);
+          else ctx.roundRect(x, y, w, h, w * 0.06);
+          ctx.stroke();
         }
       }
-
-      const mime=[
-        'video/webm;codecs=vp8,opus',
-        'video/webm;codecs=vp9,opus',
-        'video/webm'
-      ].find(m=>MediaRecorder.isTypeSupported(m))||'';
-
-      rchunks=[];
+      const wk = new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),33)'])));
+      wk.onmessage = draw;
       draw();
-      rec=mime?new MediaRecorder(out(),{mimeType:mime,videoBitsPerSecond:4e6}):new MediaRecorder(out());
-      rec.ondataavailable=e=>{if(e.data&&e.data.size>0)rchunks.push(e.data)};
-      rec.onstop=()=>{
-        clearInterval(tmr);rec=null;setOn('bRec',false,'btn-danger','btn-outline-danger');$('bRec').textContent='Gravar';
-        const blob=new Blob(rchunks,{type:'video/webm'});
-        if(!blob.size){
-          msg('A gravação ficou vazia (0 KB). Grave por pelo menos 2 segundos.');
+
+      /* Arrastar a câmera */
+      let drag = null;
+      const pt = (e) => {
+        const r = cv.getBoundingClientRect();
+        return {
+          x: ((e.clientX - r.left) * cv.width) / r.width,
+          y: ((e.clientY - r.top) * cv.height) / r.height,
+        };
+      };
+      const hit = (p) =>
+        box.w && p.x >= box.x && p.x <= box.x + box.w && p.y >= box.y && p.y <= box.y + box.h;
+      cv.onpointerdown = (e) => {
+        const p = pt(e);
+        if (hit(p)) {
+          drag = { dx: p.x - box.x, dy: p.y - box.y };
+          cv.setPointerCapture(e.pointerId);
+        }
+      };
+      cv.onpointermove = (e) => {
+        const p = pt(e);
+        if (drag) {
+          pip.x = (p.x - drag.dx) / cv.width;
+          pip.y = (p.y - drag.dy) / cv.height;
+        }
+        cv.style.cursor = drag ? 'grabbing' : hit(p) ? 'grab' : 'default';
+      };
+      cv.onpointerup = () => (drag = null);
+      cv.onwheel = (e) => {
+        if (hit(pt(e))) {
+          e.preventDefault();
+          $('sz').value = Math.min(45, Math.max(10, +$('sz').value - Math.sign(e.deltaY) * 2));
+        }
+      };
+
+      /* Fluxo de saída: vídeo do canvas + áudio misturado (microfone e áudio da tela/sistema) */
+      const out = () =>
+        _o ||
+        (_o = new MediaStream([
+          ...cv.captureStream(30).getVideoTracks(),
+          ...dest.stream.getAudioTracks(),
+        ]));
+      const setOn = (id, on, cls = 'btn-success', offCls = 'btn-outline-success') => {
+        const el = $(id);
+        el.classList.toggle(cls, on);
+        el.classList.toggle(offCls, !on);
+      };
+
+      async function stopScr() {
+        scrS?.getTracks().forEach((t) => t.stop());
+        scrS = null;
+        scr.srcObject = null;
+        $('bScr').textContent = 'Compartilhar tela / janela';
+        setOn('bScr', false);
+      }
+
+      async function startScr() {
+        scrS = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: 30, cursor: 'always' },
+          audio: true,
+          surfaceSwitching: 'include',
+          selfBrowserSurface: 'exclude',
+          systemAudio: 'include',
+        });
+        const vTrack = scrS.getVideoTracks()[0];
+        if (vTrack && vTrack.getSettings?.().displaySurface === 'browser' && document.hasFocus()) {
+          msg(
+            'Aviso: compartilhe uma janela diferente ou outro monitor/aba para evitar o efeito espelho infinito.',
+          );
+        }
+        scr.srcObject = scrS;
+        await scr.play();
+        if (scrS.getAudioTracks().length) {
+          AC.createMediaStreamSource(new MediaStream(scrS.getAudioTracks())).connect(dest);
+        }
+        if (vTrack) vTrack.onended = stopScr;
+        $('bScr').textContent = 'Parar compartilhamento';
+        setOn('bScr', true);
+        anunciarSala();
+      }
+
+      $('bScr').onclick = async () => {
+        await AC.resume();
+        msg();
+        if (scrS) return stopScr();
+        try {
+          await startScr();
+        } catch (e) {
+          scrS = null;
+          msg('Não foi possível compartilhar a tela/janela: ' + e.message);
+        }
+      };
+
+      $('bCam').onclick = async () => {
+        await AC.resume();
+        msg();
+        if (camS) {
+          camS.getTracks().forEach((t) => t.stop());
+          camS = null;
+          pip.show = false;
+          return setOn('bCam', false);
+        }
+        try {
+          camS = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+          cam.srcObject = camS;
+          await cam.play();
+          pip.show = true;
+          setOn('bCam', true);
+          anunciarSala();
+        } catch (e) {
+          camS = null;
+          msg('Não foi possível abrir a câmera: ' + e.message);
+        }
+      };
+
+      $('bMic').onclick = async () => {
+        await AC.resume();
+        msg();
+        if (micS) {
+          micN.disconnect();
+          micS.getTracks().forEach((t) => t.stop());
+          micS = null;
+          return setOn('bMic', false);
+        }
+        try {
+          micS = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true },
+          });
+          micN = AC.createMediaStreamSource(micS);
+          micN.connect(dest);
+          setOn('bMic', true);
+          anunciarSala();
+        } catch (e) {
+          micS = null;
+          msg('Não foi possível abrir o microfone: ' + e.message);
+        }
+      };
+      $('res').onchange = (e) => {
+        [cv.width, cv.height] = e.target.value.split('x').map(Number);
+      };
+      $('bFs').onclick = () => document.querySelector('.stage-box').requestFullscreen?.();
+
+      /* Gravação */
+      $('bRec').onclick = async () => {
+        await AC.resume();
+        msg();
+        if (rec) {
+          if (rec.state === 'recording') rec.requestData();
+          rec.stop();
           return;
         }
-        const fname='apresentacao-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.webm';
-        lastRecording=new File([blob],fname,{type:'video/webm'});
-        $('bSendLast').textContent='Enviar ('+Math.max(1,Math.round(blob.size/1024))+' KB)';
-        $('bSendLast').hidden=false;
 
-        const a=document.createElement('a');
-        a.href=URL.createObjectURL(blob);
-        a.download=fname;
-        a.click();
-      };
-      rec.start(250);t0=Date.now();setOn('bRec',true,'btn-danger','btn-outline-danger');
-      tmr=setInterval(()=>{const s=(Date.now()-t0)/1000|0;$('bRec').textContent='Parar ('+String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+')'},500);
-    };
-
-    /* Transmissão P2P 1x1 e Sala em Grupo (Multi-Peer + Descoberta Automática + Convidado-1..N) */
-    const peers=new Map(); // peerId -> { pc, dc, clientId, label }
-    let pendingPeerId=null,liveStream=null,currentRole=null,guestCounter=0,myGuestLabel=null;
-    const myId='pres-'+Math.random().toString(36).slice(2,8);
-    const params=new URLSearchParams(window.location.search);
-    const isClientTab=params.get('modo')==='cliente';
-
-    const enc=d=>btoa(JSON.stringify(d)),dec=s=>JSON.parse(atob(s.trim()));
-    const sim=new BroadcastChannel('p2p-apresentador-sala');
-    const h1=document.querySelector('h1');
-
-    const rtcConfig={
-      iceServers:[
-        {urls:'stun:' + ['stun','l','google','com'].join('.') + ':19302'}
-      ],
-      iceCandidatePoolSize:2
-    };
-
-    function anunciarSala(){
-      if(isClientTab||currentRole==='rx')return;
-      setRole('tx');
-      sim.postMessage({tipo:'sala-disponivel',origemId:myId});
-    }
-
-    function setRole(role){
-      currentRole=role;
-      const isTx=role==='tx';
-      const titulo=isTx?'Apresentador Transmissor':(myGuestLabel||'Apresentador Convidado');
-      h1.textContent=titulo;
-      document.title=titulo;
-      $('secRx').hidden=isTx;
-      $('secTx').hidden=!isTx;
-      document.querySelectorAll('.tx-only').forEach(el=>el.hidden=!isTx);
-    }
-    function updateRoomStatus(){
-      const ativos=[...peers.values()].filter(p=>
-        p.pc.connectionState==='connected'||p.pc.iceConnectionState==='connected'||p.pc.iceConnectionState==='completed'
-      );
-      const conectados=ativos.length;
-      const badgeSala=$('roomBadge');
-      if(badgeSala){
-        badgeSala.textContent=currentRole==='rx'
-          ?(conectados>0?`Conectado à Sala (${myGuestLabel||'Convidado'})`:'Aguardando Sala')
-          :`Sala: ${conectados} convidado${conectados===1?'':'s'}`;
-        badgeSala.className=conectados>0?'badge text-bg-success':'badge text-bg-secondary';
-      }
-
-      const guestList=$('guestList');
-      if(guestList&&currentRole==='tx'){
-        guestList.innerHTML=ativos.map(p=>`<span class="badge text-bg-success">${p.label}</span>`).join('');
-      }
-
-      const txt=conectados>0?`Conectado (${conectados})`:(peers.size>0?'Conectando…':'Sem conexão');
-      const ok=conectados>0;
-      ['st','stGuest'].forEach(id=>{
-        $(id).textContent=txt;
-        $(id).className=ok?'badge text-bg-success':'badge text-bg-secondary';
-      });
-    }
-
-    function removePeer(peerId){
-      const item=peers.get(peerId);
-      if(!item)return;
-      try{item.pc.close()}catch(e){}
-      peers.delete(peerId);
-      updateRoomStatus();
-    }
-
-    function mkpc(peerId,clientId=null,label=null){
-      if(peers.has(peerId))removePeer(peerId);
-      const pc=new RTCPeerConnection(rtcConfig);
-      const entry={pc,dc:null,clientId,label};
-      peers.set(peerId,entry);
-
-      const sync=()=>{
-        const s=pc.connectionState;
-        if(s==='failed'||s==='closed')removePeer(peerId);
-        else updateRoomStatus();
-      };
-      pc.onconnectionstatechange=sync;
-      pc.oniceconnectionstatechange=sync;
-      updateRoomStatus();
-      return entry;
-    }
-
-    const gathered=pc=>new Promise(r=>{
-      if(pc.iceGatheringState==='complete')return r();
-      const done=()=>{
-        if(pc.iceGatheringState==='complete'){
-          pc.removeEventListener('icegatheringstatechange',done);
-          r();
+        if (!scrS && !camS) {
+          try {
+            await startScr();
+          } catch (e) {
+            scrS = null;
+            msg('Gravação cancelada: escolha uma tela, janela ou abra a câmera para gravar.');
+            return;
+          }
         }
+
+        const mime =
+          ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm'].find((m) =>
+            MediaRecorder.isTypeSupported(m),
+          ) || '';
+
+        rchunks = [];
+        draw();
+        rec = mime
+          ? new MediaRecorder(out(), { mimeType: mime, videoBitsPerSecond: 4e6 })
+          : new MediaRecorder(out());
+        rec.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) rchunks.push(e.data);
+        };
+        rec.onstop = () => {
+          clearInterval(tmr);
+          rec = null;
+          setOn('bRec', false, 'btn-danger', 'btn-outline-danger');
+          $('bRec').textContent = 'Gravar';
+          const blob = new Blob(rchunks, { type: 'video/webm' });
+          if (!blob.size) {
+            msg('A gravação ficou vazia (0 KB). Grave por pelo menos 2 segundos.');
+            return;
+          }
+          const fname =
+            'apresentacao-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.webm';
+          lastRecording = new File([blob], fname, { type: 'video/webm' });
+          $('bSendLast').textContent =
+            'Enviar (' + Math.max(1, Math.round(blob.size / 1024)) + ' KB)';
+          $('bSendLast').hidden = false;
+
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = fname;
+          a.click();
+        };
+        rec.start(250);
+        t0 = Date.now();
+        setOn('bRec', true, 'btn-danger', 'btn-outline-danger');
+        tmr = setInterval(() => {
+          const s = ((Date.now() - t0) / 1000) | 0;
+          $('bRec').textContent =
+            'Parar (' +
+            String((s / 60) | 0).padStart(2, '0') +
+            ':' +
+            String(s % 60).padStart(2, '0') +
+            ')';
+        }, 500);
       };
-      pc.addEventListener('icegatheringstatechange',done);
-      setTimeout(r,3000);
-    });
 
-    $('bNewTab').onclick=()=>{
-      const url=new URL(window.location.href);
-      url.searchParams.set('modo','cliente');
-      window.open(url.toString(),'_blank');
-    };
+      /* Transmissão P2P 1x1 e Sala em Grupo (Multi-Peer + Descoberta Automática + Convidado-1..N) */
+      const peers = new Map(); // peerId -> { pc, dc, clientId, label }
+      let pendingPeerId = null,
+        liveStream = null,
+        currentRole = null,
+        guestCounter = 0,
+        myGuestLabel = null;
+      const myId = 'pres-' + Math.random().toString(36).slice(2, 8);
+      const params = new URLSearchParams(window.location.search);
+      const isClientTab = params.get('modo') === 'cliente';
 
-    $('unmuteBtn').onclick=()=>{
-      rv.muted=false;
-      rv.play().catch(()=>{});
-      $('unmuteBtn').hidden=true;
-    };
+      const enc = (d) => btoa(JSON.stringify(d)),
+        dec = (s) => JSON.parse(atob(s.trim()));
+      const sim = new BroadcastChannel('p2p-apresentador-sala');
+      const h1 = document.querySelector('h1');
 
-    async function entrarComoConvidado(ofertaCodificada,origemId='host',guestLabel=null){
-      msg();
-      try{
-        if(guestLabel)myGuestLabel=guestLabel;
-        setRole('rx');
-        for(const id of [...peers.keys()])removePeer(id);
-        const entry=mkpc(origemId,null,myGuestLabel);
-        entry.pc.ondatachannel=e=>{
-          entry.dc=e.channel;
-          setupDC(e.channel,origemId);
-        };
-        entry.pc.ontrack=e=>{
-          liveStream=(e.streams&&e.streams[0])?e.streams[0]:new MediaStream([e.track]);
-          rv.pause();
-          rv.removeAttribute('src');
-          rv.muted=true;
-          rv.srcObject=liveStream;
-          rv.style.display='block';
-          cv.style.display='none';
-          $('backLive').hidden=true;
-          $('unmuteBtn').hidden=false;
-          rv.play().catch(()=>{});
-        };
-        await entry.pc.setRemoteDescription(dec(ofertaCodificada));
-        await entry.pc.setLocalDescription(await entry.pc.createAnswer());
-        await gathered(entry.pc);
-        const resposta=enc(entry.pc.localDescription);
-        $('ans').value=resposta;
-        return resposta;
-      }catch(e){
-        msg('Convite inválido: '+e.message);
-      }
-    }
-    async function gerarConviteParaGrupo(targetClientId=null){
-      await AC.resume();msg();
-      try{
+      const rtcConfig = {
+        iceServers: [{ urls: 'stun:' + ['stun', 'l', 'google', 'com'].join('.') + ':19302' }],
+        iceCandidatePoolSize: 2,
+      };
+
+      function anunciarSala() {
+        if (isClientTab || currentRole === 'rx') return;
         setRole('tx');
-        let assignedLabel=null;
-        if(targetClientId){
-          for(const [id,item] of peers.entries()){
-            if(item.clientId===targetClientId){
-              assignedLabel=item.label;
-              removePeer(id);
-            }
-          }
-        }
-        if(!assignedLabel){
-          guestCounter+=1;
-          assignedLabel='Convidado-'+guestCounter;
-        }
-        const peerId='conv-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
-        if(!targetClientId)pendingPeerId=peerId;
-        const entry=mkpc(peerId,targetClientId,assignedLabel);
-        const channel=entry.pc.createDataChannel('files');
-        entry.dc=channel;
-        setupDC(channel,peerId);
+        sim.postMessage({ tipo: 'sala-disponivel', origemId: myId });
+      }
 
-        const o=out();
-        o.getTracks().forEach(t=>entry.pc.addTrack(t,o));
-        await entry.pc.setLocalDescription(await entry.pc.createOffer());
-        await gathered(entry.pc);
-        const oferta=enc(entry.pc.localDescription);
-        $('offer').value=oferta;
-        sim.postMessage({
-          tipo:'oferta-apresentador',
-          origemId:myId,
-          destinoId:targetClientId,
-          peerId,
-          guestLabel:assignedLabel,
-          sdp:oferta
+      function setRole(role) {
+        currentRole = role;
+        const isTx = role === 'tx';
+        const titulo = isTx ? 'Apresentador Transmissor' : myGuestLabel || 'Apresentador Convidado';
+        h1.textContent = titulo;
+        document.title = titulo;
+        $('secRx').hidden = isTx;
+        $('secTx').hidden = !isTx;
+        document.querySelectorAll('.tx-only').forEach((el) => (el.hidden = !isTx));
+      }
+      function updateRoomStatus() {
+        const ativos = [...peers.values()].filter(
+          (p) =>
+            p.pc.connectionState === 'connected' ||
+            p.pc.iceConnectionState === 'connected' ||
+            p.pc.iceConnectionState === 'completed',
+        );
+        const conectados = ativos.length;
+        const badgeSala = $('roomBadge');
+        if (badgeSala) {
+          badgeSala.textContent =
+            currentRole === 'rx'
+              ? conectados > 0
+                ? `Conectado à Sala (${myGuestLabel || 'Convidado'})`
+                : 'Aguardando Sala'
+              : `Sala: ${conectados} convidado${conectados === 1 ? '' : 's'}`;
+          badgeSala.className =
+            conectados > 0 ? 'badge text-bg-success' : 'badge text-bg-secondary';
+        }
+
+        const guestList = $('guestList');
+        if (guestList && currentRole === 'tx') {
+          guestList.innerHTML = ativos
+            .map((p) => `<span class="badge text-bg-success">${p.label}</span>`)
+            .join('');
+        }
+
+        const txt =
+          conectados > 0
+            ? `Conectado (${conectados})`
+            : peers.size > 0
+              ? 'Conectando…'
+              : 'Sem conexão';
+        const ok = conectados > 0;
+        ['st', 'stGuest'].forEach((id) => {
+          $(id).textContent = txt;
+          $(id).className = ok ? 'badge text-bg-success' : 'badge text-bg-secondary';
         });
-      }catch(e){
-        msg('Erro ao gerar convite: '+e.message);
       }
-    }
 
-    $('bOffer').onclick=()=>{
-      gerarConviteParaGrupo();
-      anunciarSala();
-    };
-
-    $('bAns').onclick=async()=>{
-      try{
-        const entry=pendingPeerId?peers.get(pendingPeerId):[...peers.values()].pop();
-        if(!entry)return msg('Gere um convite antes de colar a resposta.');
-        await entry.pc.setRemoteDescription(dec($('ansIn').value));
-        pendingPeerId=null;
-        $('ansIn').value='';
-      }catch(e){
-        msg('Resposta inválida: '+e.message);
+      function removePeer(peerId) {
+        const item = peers.get(peerId);
+        if (!item) return;
+        try {
+          item.pc.close();
+        } catch (e) {}
+        peers.delete(peerId);
+        updateRoomStatus();
       }
-    };
 
-    $('bJoin').onclick=()=>entrarComoConvidado($('offIn').value,'host-manual');
+      function mkpc(peerId, clientId = null, label = null) {
+        if (peers.has(peerId)) removePeer(peerId);
+        const pc = new RTCPeerConnection(rtcConfig);
+        const entry = { pc, dc: null, clientId, label };
+        peers.set(peerId, entry);
 
-    sim.onmessage=async({data})=>{
-      if(!data||data.origemId===myId)return;
-
-      if(data.tipo==='sala-disponivel'&&(isClientTab||currentRole==='rx'||(!currentRole&&peers.size===0))){
-        sim.postMessage({tipo:'cliente-pronto',origemId:myId});
-      }else if(data.tipo==='oferta-apresentador'){
-        if(data.destinoId&&data.destinoId!==myId)return;
-        if(!data.destinoId&&!(isClientTab||currentRole==='rx'||(!currentRole&&peers.size===0)))return;
-        $('offIn').value=data.sdp;
-        const resposta=await entrarComoConvidado(data.sdp,data.origemId,data.guestLabel||null);
-        if(resposta){
-          sim.postMessage({
-            tipo:'resposta-convidado',
-            origemId:myId,
-            destinoId:data.origemId,
-            peerId:data.peerId,
-            sdp:resposta
-          });
-        }
-      }else if(data.tipo==='resposta-convidado'&&data.destinoId===myId){
-        const entry=peers.get(data.peerId);
-        if(entry&&entry.pc.signalingState!=='stable'){
-          await entry.pc.setRemoteDescription(dec(data.sdp));
-          if(pendingPeerId===data.peerId)pendingPeerId=null;
-        }
-      }else if(data.tipo==='cliente-pronto'&&!isClientTab&&(currentRole==='tx'||scrS||camS||micS)){
-        gerarConviteParaGrupo(data.origemId);
+        const sync = () => {
+          const s = pc.connectionState;
+          if (s === 'failed' || s === 'closed') removePeer(peerId);
+          else updateRoomStatus();
+        };
+        pc.onconnectionstatechange = sync;
+        pc.oniceconnectionstatechange = sync;
+        updateRoomStatus();
+        return entry;
       }
-    };
-    document.querySelectorAll('.cp').forEach(b=>b.onclick=()=>navigator.clipboard.writeText($(b.dataset.t).value));
 
-    /* Reproduzir gravação recebida e voltar ao modo ao vivo */
-    function playReceived(url){
-      msg();
-      rv.pause();
-      rv.srcObject=null;
-      rv.muted=false;
-      $('unmuteBtn').hidden=true;
-      rv.style.display='block';
-      cv.style.display='none';
-      $('backLive').hidden=false;
+      const gathered = (pc) =>
+        new Promise((r) => {
+          if (pc.iceGatheringState === 'complete') return r();
+          const done = () => {
+            if (pc.iceGatheringState === 'complete') {
+              pc.removeEventListener('icegatheringstatechange', done);
+              r();
+            }
+          };
+          pc.addEventListener('icegatheringstatechange', done);
+          setTimeout(r, 3000);
+        });
 
-      rv.onerror=()=>{
-        const err=rv.error;
-        msg('Erro ao carregar vídeo (código '+(err?err.code:'desconhecido')+'): '+(err?.message||'formato não suportado'));
-      };
-      rv.onloadedmetadata=()=>{
-        rv.play().catch(err=>msg('Clique no botão Play do player para iniciar: '+err.message));
+      $('bNewTab').onclick = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('modo', 'cliente');
+        window.open(url.toString(), '_blank');
       };
 
-      rv.src=url;
-      rv.load();
-    }
+      $('unmuteBtn').onclick = () => {
+        rv.muted = false;
+        rv.play().catch(() => {});
+        $('unmuteBtn').hidden = true;
+      };
 
-    $('backLive').onclick=()=>{
-      msg();
-      rv.onerror=null;
-      rv.onloadedmetadata=null;
-      rv.pause();
-      rv.removeAttribute('src');
-      rv.load();
-      $('backLive').hidden=true;
-      if(currentRole==='rx'&&liveStream){
-        rv.srcObject=liveStream;
-        rv.style.display='block';
-        cv.style.display='none';
-        rv.play().catch(()=>{});
-      }else{
-        rv.style.display='none';
-        cv.style.display='block';
+      async function entrarComoConvidado(ofertaCodificada, origemId = 'host', guestLabel = null) {
+        msg();
+        try {
+          if (guestLabel) myGuestLabel = guestLabel;
+          setRole('rx');
+          for (const id of [...peers.keys()]) removePeer(id);
+          const entry = mkpc(origemId, null, myGuestLabel);
+          entry.pc.ondatachannel = (e) => {
+            entry.dc = e.channel;
+            setupDC(e.channel, origemId);
+          };
+          entry.pc.ontrack = (e) => {
+            liveStream = e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]);
+            rv.pause();
+            rv.removeAttribute('src');
+            rv.muted = true;
+            rv.srcObject = liveStream;
+            rv.style.display = 'block';
+            cv.style.display = 'none';
+            $('backLive').hidden = true;
+            $('unmuteBtn').hidden = false;
+            rv.play().catch(() => {});
+          };
+          await entry.pc.setRemoteDescription(dec(ofertaCodificada));
+          await entry.pc.setLocalDescription(await entry.pc.createAnswer());
+          await gathered(entry.pc);
+          const resposta = enc(entry.pc.localDescription);
+          $('ans').value = resposta;
+          return resposta;
+        } catch (e) {
+          msg('Convite inválido: ' + e.message);
+        }
       }
-    };
-
-    /* Envio e recebimento de arquivos e gravações (1x1 e Sala em Grupo) */
-    const fmt=n=>n>1e6?(n/1e6).toFixed(1)+' MB':Math.max(1,Math.ceil(n/1e3))+' KB';
-    function row(name,size,txt){
-      const li=document.createElement('li'),a=document.createElement('span'),b=document.createElement('span');
-      a.textContent=name+' ('+fmt(size)+')';
-      b.className='acts';
-      b.textContent=txt;
-      li.append(a,b);
-      $('files').prepend(li);
-      return b;
-    }
-
-    function setupDC(c,fromPeerId){
-      c.binaryType='arraybuffer';
-      c.bufferedAmountLowThreshold=1<<20;
-      let inc=null;
-
-      c.onmessage=e=>{
-        if(typeof e.data==='string'){
-          const m=JSON.parse(e.data);
-          if(m.t==='file')inc={m,parts:[],got:0,out:row(m.name,m.size,'recebendo 0%')};
-          else if(m.t==='end'&&inc){
-            const mimeType=/\.mp4$/i.test(inc.m.name)?'video/mp4':'video/webm';
-            const blob=new Blob(inc.parts,{type:mimeType});
-            const url=URL.createObjectURL(blob);
-            const isMedia=/^(video|audio)\//.test(inc.m.type||mimeType)||/\.(webm|mp4|ogg|mkv|mov|mp3|wav)$/i.test(inc.m.name);
-
-            const btnSave=document.createElement('button');
-            btnSave.type='button';
-            btnSave.className='btn btn-outline-secondary btn-sm py-0 px-2';
-            btnSave.textContent='Salvar';
-            btnSave.onclick=()=>{
-              const a=document.createElement('a');
-              a.href=url;
-              a.download=inc.m.name;
-              a.click();
-            };
-
-            if(isMedia){
-              const btnPlay=document.createElement('button');
-              btnPlay.type='button';
-              btnPlay.className='btn btn-success btn-sm py-0 px-2';
-              btnPlay.textContent='Reproduzir';
-              btnPlay.onclick=()=>playReceived(url);
-              inc.out.replaceChildren(btnPlay,btnSave);
-            }else{
-              inc.out.replaceChildren(btnSave);
+      async function gerarConviteParaGrupo(targetClientId = null) {
+        await AC.resume();
+        msg();
+        try {
+          setRole('tx');
+          let assignedLabel = null;
+          if (targetClientId) {
+            for (const [id, item] of peers.entries()) {
+              if (item.clientId === targetClientId) {
+                assignedLabel = item.label;
+                removePeer(id);
+              }
             }
-
-            /* Se for o Apresentador da sala, retransmite o arquivo recebido para os demais convidados */
-            if(currentRole==='tx'&&peers.size>1){
-              const fwdFile=new File([blob],inc.m.name,{type:mimeType});
-              send(fwdFile,fromPeerId);
-            }
-            inc=null;
           }
-        }else if(inc){
-          inc.parts.push(e.data);
-          inc.got+=e.data.byteLength;
-          inc.out.textContent='recebendo '+Math.round(inc.got/inc.m.size*100)+'%';
+          if (!assignedLabel) {
+            guestCounter += 1;
+            assignedLabel = 'Convidado-' + guestCounter;
+          }
+          const peerId = 'conv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+          if (!targetClientId) pendingPeerId = peerId;
+          const entry = mkpc(peerId, targetClientId, assignedLabel);
+          const channel = entry.pc.createDataChannel('files');
+          entry.dc = channel;
+          setupDC(channel, peerId);
+
+          const o = out();
+          o.getTracks().forEach((t) => entry.pc.addTrack(t, o));
+          await entry.pc.setLocalDescription(await entry.pc.createOffer());
+          await gathered(entry.pc);
+          const oferta = enc(entry.pc.localDescription);
+          $('offer').value = oferta;
+          sim.postMessage({
+            tipo: 'oferta-apresentador',
+            origemId: myId,
+            destinoId: targetClientId,
+            peerId,
+            guestLabel: assignedLabel,
+            sdp: oferta,
+          });
+        } catch (e) {
+          msg('Erro ao gerar convite: ' + e.message);
+        }
+      }
+
+      $('bOffer').onclick = () => {
+        gerarConviteParaGrupo();
+        anunciarSala();
+      };
+
+      $('bAns').onclick = async () => {
+        try {
+          const entry = pendingPeerId ? peers.get(pendingPeerId) : [...peers.values()].pop();
+          if (!entry) return msg('Gere um convite antes de colar a resposta.');
+          await entry.pc.setRemoteDescription(dec($('ansIn').value));
+          pendingPeerId = null;
+          $('ansIn').value = '';
+        } catch (e) {
+          msg('Resposta inválida: ' + e.message);
         }
       };
-    }
 
-    async function sendToChannel(dc,f,onProg){
-      dc.send(JSON.stringify({t:'file',name:f.name,size:f.size,type:f.type||'video/webm'}));
-      for(let i=0;i<f.size;i+=16384){
-        if(dc.bufferedAmount>1<<20)await new Promise(r=>dc.addEventListener('bufferedamountlow',r,{once:true}));
-        dc.send(await f.slice(i,i+16384).arrayBuffer());
-        if(onProg)onProg(Math.round(Math.min(i+16384,f.size)/f.size*100));
+      $('bJoin').onclick = () => entrarComoConvidado($('offIn').value, 'host-manual');
+
+      sim.onmessage = async ({ data }) => {
+        if (!data || data.origemId === myId) return;
+
+        if (
+          data.tipo === 'sala-disponivel' &&
+          (isClientTab || currentRole === 'rx' || (!currentRole && peers.size === 0))
+        ) {
+          sim.postMessage({ tipo: 'cliente-pronto', origemId: myId });
+        } else if (data.tipo === 'oferta-apresentador') {
+          if (data.destinoId && data.destinoId !== myId) return;
+          if (
+            !data.destinoId &&
+            !(isClientTab || currentRole === 'rx' || (!currentRole && peers.size === 0))
+          )
+            return;
+          $('offIn').value = data.sdp;
+          const resposta = await entrarComoConvidado(
+            data.sdp,
+            data.origemId,
+            data.guestLabel || null,
+          );
+          if (resposta) {
+            sim.postMessage({
+              tipo: 'resposta-convidado',
+              origemId: myId,
+              destinoId: data.origemId,
+              peerId: data.peerId,
+              sdp: resposta,
+            });
+          }
+        } else if (data.tipo === 'resposta-convidado' && data.destinoId === myId) {
+          const entry = peers.get(data.peerId);
+          if (entry && entry.pc.signalingState !== 'stable') {
+            await entry.pc.setRemoteDescription(dec(data.sdp));
+            if (pendingPeerId === data.peerId) pendingPeerId = null;
+          }
+        } else if (
+          data.tipo === 'cliente-pronto' &&
+          !isClientTab &&
+          (currentRole === 'tx' || scrS || camS || micS)
+        ) {
+          gerarConviteParaGrupo(data.origemId);
+        }
+      };
+      document
+        .querySelectorAll('.cp')
+        .forEach((b) => (b.onclick = () => navigator.clipboard.writeText($(b.dataset.t).value)));
+
+      /* Reproduzir gravação recebida e voltar ao modo ao vivo */
+      function playReceived(url) {
+        msg();
+        rv.pause();
+        rv.srcObject = null;
+        rv.muted = false;
+        $('unmuteBtn').hidden = true;
+        rv.style.display = 'block';
+        cv.style.display = 'none';
+        $('backLive').hidden = false;
+
+        rv.onerror = () => {
+          const err = rv.error;
+          msg(
+            'Erro ao carregar vídeo (código ' +
+              (err ? err.code : 'desconhecido') +
+              '): ' +
+              (err?.message || 'formato não suportado'),
+          );
+        };
+        rv.onloadedmetadata = () => {
+          rv.play().catch((err) =>
+            msg('Clique no botão Play do player para iniciar: ' + err.message),
+          );
+        };
+
+        rv.src = url;
+        rv.load();
       }
-      while(dc.bufferedAmount>0)await new Promise(r=>setTimeout(r,20));
-      dc.send(JSON.stringify({t:'end'}));
-    }
 
-    async function send(f,excludePeerId=null){
-      const canaisAbertos=[...peers.entries()]
-        .filter(([id,p])=>id!==excludePeerId&&p.dc&&p.dc.readyState==='open')
-        .map(([,p])=>p.dc);
+      $('backLive').onclick = () => {
+        msg();
+        rv.onerror = null;
+        rv.onloadedmetadata = null;
+        rv.pause();
+        rv.removeAttribute('src');
+        rv.load();
+        $('backLive').hidden = true;
+        if (currentRole === 'rx' && liveStream) {
+          rv.srcObject = liveStream;
+          rv.style.display = 'block';
+          cv.style.display = 'none';
+          rv.play().catch(() => {});
+        } else {
+          rv.style.display = 'none';
+          cv.style.display = 'block';
+        }
+      };
 
-      if(!canaisAbertos.length){
-        if(!excludePeerId)msg('Conecte-se a pelo menos um participante antes de enviar arquivos.');
-        return;
+      /* Envio e recebimento de arquivos e gravações (1x1 e Sala em Grupo) */
+      const fmt = (n) =>
+        n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.ceil(n / 1e3)) + ' KB';
+      function row(name, size, txt) {
+        const li = document.createElement('li'),
+          a = document.createElement('span'),
+          b = document.createElement('span');
+        a.textContent = name + ' (' + fmt(size) + ')';
+        b.className = 'acts';
+        b.textContent = txt;
+        li.append(a, b);
+        $('files').prepend(li);
+        return b;
       }
-      if(!f||!f.size)return msg('O arquivo está vazio (0 KB) e não pode ser enviado.');
 
-      const o=row(f.name,f.size,'enviando 0%');
-      await Promise.all(canaisAbertos.map((dc,idx)=>sendToChannel(dc,f,idx===0?(pct=>{o.textContent='enviando '+pct+'%'}):null)));
-      o.textContent=canaisAbertos.length>1?`enviado (${canaisAbertos.length})`:'enviado';
-    }
+      function setupDC(c, fromPeerId) {
+        c.binaryType = 'arraybuffer';
+        c.bufferedAmountLowThreshold = 1 << 20;
+        let inc = null;
 
-    $('bSendLast').onclick=()=>{
-      if(lastRecording&&lastRecording.size>0)send(lastRecording);
-      else msg('Nenhuma gravação válida disponível.');
-    };
+        c.onmessage = (e) => {
+          if (typeof e.data === 'string') {
+            const m = JSON.parse(e.data);
+            if (m.t === 'file')
+              inc = { m, parts: [], got: 0, out: row(m.name, m.size, 'recebendo 0%') };
+            else if (m.t === 'end' && inc) {
+              const mimeType = /\.mp4$/i.test(inc.m.name) ? 'video/mp4' : 'video/webm';
+              const blob = new Blob(inc.parts, { type: mimeType });
+              const url = URL.createObjectURL(blob);
+              const isMedia =
+                /^(video|audio)\//.test(inc.m.type || mimeType) ||
+                /\.(webm|mp4|ogg|mkv|mov|mp3|wav)$/i.test(inc.m.name);
 
-    const sendAll=async fs=>{for(const f of fs)await send(f)};
-    $('drop').onclick=()=>$('fi').click();
-    $('drop').onkeydown=e=>e.key==='Enter'&&$('fi').click();
-    $('fi').onchange=e=>{sendAll([...e.target.files]);e.target.value=''};
-    $('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('over')};
-    $('drop').ondragleave=()=>$('drop').classList.remove('over');
-    $('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');sendAll([...e.dataTransfer.files])};
+              const btnSave = document.createElement('button');
+              btnSave.type = 'button';
+              btnSave.className = 'btn btn-outline-secondary btn-sm py-0 px-2';
+              btnSave.textContent = 'Salvar';
+              btnSave.onclick = () => {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = inc.m.name;
+                a.click();
+              };
 
-    document.addEventListener('DOMContentLoaded',()=>{
-      if(isClientTab){
-        setRole('rx');
-        sim.postMessage({tipo:'cliente-pronto',origemId:myId});
-      }else{
-        sim.postMessage({tipo:'cliente-pronto',origemId:myId});
+              if (isMedia) {
+                const btnPlay = document.createElement('button');
+                btnPlay.type = 'button';
+                btnPlay.className = 'btn btn-success btn-sm py-0 px-2';
+                btnPlay.textContent = 'Reproduzir';
+                btnPlay.onclick = () => playReceived(url);
+                inc.out.replaceChildren(btnPlay, btnSave);
+              } else {
+                inc.out.replaceChildren(btnSave);
+              }
+
+              /* Se for o Apresentador da sala, retransmite o arquivo recebido para os demais convidados */
+              if (currentRole === 'tx' && peers.size > 1) {
+                const fwdFile = new File([blob], inc.m.name, { type: mimeType });
+                send(fwdFile, fromPeerId);
+              }
+              inc = null;
+            }
+          } else if (inc) {
+            inc.parts.push(e.data);
+            inc.got += e.data.byteLength;
+            inc.out.textContent = 'recebendo ' + Math.round((inc.got / inc.m.size) * 100) + '%';
+          }
+        };
       }
-    });
+
+      async function sendToChannel(dc, f, onProg) {
+        dc.send(
+          JSON.stringify({ t: 'file', name: f.name, size: f.size, type: f.type || 'video/webm' }),
+        );
+        for (let i = 0; i < f.size; i += 16384) {
+          if (dc.bufferedAmount > 1 << 20)
+            await new Promise((r) => dc.addEventListener('bufferedamountlow', r, { once: true }));
+          dc.send(await f.slice(i, i + 16384).arrayBuffer());
+          if (onProg) onProg(Math.round((Math.min(i + 16384, f.size) / f.size) * 100));
+        }
+        while (dc.bufferedAmount > 0) await new Promise((r) => setTimeout(r, 20));
+        dc.send(JSON.stringify({ t: 'end' }));
+      }
+
+      async function send(f, excludePeerId = null) {
+        const canaisAbertos = [...peers.entries()]
+          .filter(([id, p]) => id !== excludePeerId && p.dc && p.dc.readyState === 'open')
+          .map(([, p]) => p.dc);
+
+        if (!canaisAbertos.length) {
+          if (!excludePeerId)
+            msg('Conecte-se a pelo menos um participante antes de enviar arquivos.');
+          return;
+        }
+        if (!f || !f.size) return msg('O arquivo está vazio (0 KB) e não pode ser enviado.');
+
+        const o = row(f.name, f.size, 'enviando 0%');
+        await Promise.all(
+          canaisAbertos.map((dc, idx) =>
+            sendToChannel(
+              dc,
+              f,
+              idx === 0
+                ? (pct) => {
+                    o.textContent = 'enviando ' + pct + '%';
+                  }
+                : null,
+            ),
+          ),
+        );
+        o.textContent = canaisAbertos.length > 1 ? `enviado (${canaisAbertos.length})` : 'enviado';
+      }
+
+      $('bSendLast').onclick = () => {
+        if (lastRecording && lastRecording.size > 0) send(lastRecording);
+        else msg('Nenhuma gravação válida disponível.');
+      };
+
+      const sendAll = async (fs) => {
+        for (const f of fs) await send(f);
+      };
+      $('drop').onclick = () => $('fi').click();
+      $('drop').onkeydown = (e) => e.key === 'Enter' && $('fi').click();
+      $('fi').onchange = (e) => {
+        sendAll([...e.target.files]);
+        e.target.value = '';
+      };
+      $('drop').ondragover = (e) => {
+        e.preventDefault();
+        $('drop').classList.add('over');
+      };
+      $('drop').ondragleave = () => $('drop').classList.remove('over');
+      $('drop').ondrop = (e) => {
+        e.preventDefault();
+        $('drop').classList.remove('over');
+        sendAll([...e.dataTransfer.files]);
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        if (isClientTab) {
+          setRole('rx');
+          sim.postMessage({ tipo: 'cliente-pronto', origemId: myId });
+        } else {
+          sim.postMessage({ tipo: 'cliente-pronto', origemId: myId });
+        }
+      });
     </script>
 
     <!-- //////////////////////////////////////////////////////// -->
@@ -911,11 +1187,13 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
     <script src="/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        if (typeof bootstrap === 'undefined') {
-            alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
-            console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
-            document.write('<script src="https://jsdelivr.net" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"><\/script>');
-        }
+      if (typeof bootstrap === 'undefined') {
+        alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+        console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+        document.write(
+          '<script src="https://jsdelivr.net" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"><\/script>',
+        );
+      }
     </script>
 
     <!-- //////////////////////////////////////////////////////// -->
@@ -925,6 +1203,5 @@ SISTEMA DE APRESENTAÇÃO, GRAVAÇÃO E TRANSMISSÃO P2P / SALA EM GRUPO
     <!-- //////////////////////////////////////////////////////// -->
     <!-- Script de proteção global                                -->
     <!-- //////////////////////////////////////////////////////// -->
-
   </body>
 </html>

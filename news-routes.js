@@ -8,7 +8,7 @@ const {
   STATUS_EDICOES,
   TIPOS_MATERIA,
   STATUS_MATERIA,
-  sugerirPosicaoMateria
+  sugerirPosicaoMateria,
 } = require('./news-utils');
 
 function idValido(valor) {
@@ -34,9 +34,9 @@ function edicaoParaView(registro) {
     porColuna: [
       Number(registro.coluna_1 || 0),
       Number(registro.coluna_2 || 0),
-      Number(registro.coluna_3 || 0)
+      Number(registro.coluna_3 || 0),
     ],
-    temManchete: Number(registro.tem_manchete || 0) > 0
+    temManchete: Number(registro.tem_manchete || 0) > 0,
   };
 }
 
@@ -57,7 +57,7 @@ function materiaParaView(registro) {
     imagem: registro.imagem || '',
     legenda: registro.legenda || '',
     criadoEm: registro.criado_em || '',
-    atualizadoEm: registro.atualizado_em || ''
+    atualizadoEm: registro.atualizado_em || '',
   };
 }
 
@@ -93,7 +93,7 @@ async function consultarEdicoes(conn, busca = '', status = '') {
      GROUP BY e.id, e.numero, e.data, e.titulo, e.status, e.responsavel,
               e.observacao, e.arquivo, e.criado_em, e.atualizado_em, e.fechada_em
      ORDER BY e.data DESC, e.numero DESC`,
-    parametros
+    parametros,
   );
   return registros.map(edicaoParaView);
 }
@@ -103,7 +103,7 @@ async function consultarEdicao(conn, id) {
     `SELECT id, numero, data, titulo, status, responsavel, observacao, arquivo,
             criado_em, atualizado_em, fechada_em
      FROM edicoes WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   if (!registros.length) return null;
 
@@ -111,7 +111,7 @@ async function consultarEdicao(conn, id) {
     `SELECT edicao_id, id, coluna, ordem, tipo, status, categoria, titulo, link,
             resumo, autor, tempo, imagem, legenda, criado_em, atualizado_em
      FROM materias WHERE edicao_id = ? ORDER BY coluna, ordem, criado_em, id`,
-    [id]
+    [id],
   );
   const edicao = edicaoParaView(registros[0]);
   edicao.nome = edicao.titulo;
@@ -136,13 +136,13 @@ async function renderizarTabelaEdicoes(conn, res, opcoes = {}) {
       titulo: '',
       responsavel: '',
       observacao: '',
-      ...(opcoes.edicaoForm || {})
+      ...(opcoes.edicaoForm || {}),
     },
     erroFormulario: opcoes.erroFormulario || '',
     abrirModal: Boolean(opcoes.abrirModal),
     STATUS_EDICOES,
     formatarDataBR,
-    formatarDataHoraBR
+    formatarDataHoraBR,
   });
 }
 
@@ -154,11 +154,11 @@ async function renderizarPaginaMaterias(conn, res, id, opcoes = {}) {
   let materias = edicao.materias;
   if (busca) {
     const termo = busca.toLocaleLowerCase('pt-BR');
-    materias = materias.filter(materia =>
+    materias = materias.filter((materia) =>
       [materia.titulo, materia.categoria, materia.autor, materia.resumo]
         .join(' ')
         .toLocaleLowerCase('pt-BR')
-        .includes(termo)
+        .includes(termo),
     );
   }
 
@@ -168,12 +168,12 @@ async function renderizarPaginaMaterias(conn, res, id, opcoes = {}) {
     totalMaterias: edicao.materias.length,
     busca,
     mensagem: opcoes.mensagem || '',
-    formatarDataBR
+    formatarDataBR,
   });
 }
 
 async function renderizarCadastroMateria(conn, res, id, materiaForm = {}, opcoes = {}) {
-  const edicao = opcoes.edicao || await consultarEdicao(conn, id);
+  const edicao = opcoes.edicao || (await consultarEdicao(conn, id));
   if (!edicao) return res.status(404).send('Edição não encontrada.');
 
   const materia = {
@@ -190,7 +190,7 @@ async function renderizarCadastroMateria(conn, res, id, materiaForm = {}, opcoes
     tempo: '',
     imagem: '',
     legenda: '',
-    ...materiaForm
+    ...materiaForm,
   };
 
   return res.status(opcoes.httpStatus || 200).render('cadMaterias', {
@@ -200,7 +200,7 @@ async function renderizarCadastroMateria(conn, res, id, materiaForm = {}, opcoes
     tiposMateria: TIPOS_MATERIA,
     statusMateria: STATUS_MATERIA,
     formatarDataBR,
-    somenteLeitura: edicao.status === 'Fechada'
+    somenteLeitura: edicao.status === 'Fechada',
   });
 }
 
@@ -218,7 +218,7 @@ function exportacaoEdicao(edicao) {
     criadoEm: edicao.criadoEm,
     atualizadoEm: edicao.atualizadoEm,
     fechadaEm: edicao.fechadaEm,
-    materias: edicao.materias.map(materia => ({
+    materias: edicao.materias.map((materia) => ({
       id: materia.id,
       coluna: materia.coluna,
       ordem: materia.ordem,
@@ -233,8 +233,8 @@ function exportacaoEdicao(edicao) {
       imagem: materia.imagem,
       legenda: materia.legenda,
       criadoEm: materia.criadoEm,
-      atualizadoEm: materia.atualizadoEm
-    }))
+      atualizadoEm: materia.atualizadoEm,
+    })),
   };
 }
 
@@ -246,7 +246,7 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
       return await renderizarTabelaEdicoes(conn, res, {
         busca: typeof req.query.q === 'string' ? req.query.q.trim() : '',
         status: typeof req.query.status === 'string' ? req.query.status : '',
-        mensagem: typeof req.query.mensagem === 'string' ? req.query.mensagem : ''
+        mensagem: typeof req.query.mensagem === 'string' ? req.query.mensagem : '',
       });
     } catch (err) {
       console.error('[ERRO MySQL na rota /edicoes]:', err.message);
@@ -320,7 +320,9 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
     if (req.query.preview === '1') parametros.set('preview', '1');
     if (req.query.imprimir === '1') parametros.set('imprimir', '1');
     const consulta = parametros.toString();
-    return res.redirect(`/edicoes/${encodeURIComponent(id)}/preview${consulta ? `?${consulta}` : ''}`);
+    return res.redirect(
+      `/edicoes/${encodeURIComponent(id)}/preview${consulta ? `?${consulta}` : ''}`,
+    );
   });
 
   app.post('/edicoes', exigirAutenticacao, async (req, res) => {
@@ -336,7 +338,7 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
           edicaoForm: req.body,
           erroFormulario: err.message,
           abrirModal: true,
-          httpStatus: 400
+          httpStatus: 400,
         });
       } catch (renderError) {
         console.error('[ERRO ao reapresentar cadastro de edição]:', renderError.message);
@@ -349,13 +351,15 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
     let conn;
     try {
       conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME, dateStrings: true });
-      const [abertas] = await conn.execute("SELECT id FROM edicoes WHERE status = 'Editando' LIMIT 1");
+      const [abertas] = await conn.execute(
+        "SELECT id FROM edicoes WHERE status = 'Editando' LIMIT 1",
+      );
       if (abertas.length) {
         return await renderizarTabelaEdicoes(conn, res, {
           edicaoForm: req.body,
           erroFormulario: 'Já existe uma edição em andamento. Feche-a antes de criar outra.',
           abrirModal: true,
-          httpStatus: 409
+          httpStatus: 409,
         });
       }
       await conn.execute(
@@ -364,10 +368,18 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
           criado_em, atualizado_em, fechada_em
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          dados.id, dados.numero, dados.data, dados.titulo, dados.status,
-          dados.responsavel, dados.observacao, dados.arquivo,
-          dados.criadoEm, dados.atualizadoEm, null
-        ]
+          dados.id,
+          dados.numero,
+          dados.data,
+          dados.titulo,
+          dados.status,
+          dados.responsavel,
+          dados.observacao,
+          dados.arquivo,
+          dados.criadoEm,
+          dados.atualizadoEm,
+          null,
+        ],
       );
       return res.redirect(`/edicoes?mensagem=${encodeURIComponent('Edição criada com sucesso.')}`);
     } catch (err) {
@@ -376,7 +388,7 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
           edicaoForm: req.body,
           erroFormulario: 'Já existe uma edição com esse número ou data.',
           abrirModal: true,
-          httpStatus: 409
+          httpStatus: 409,
         });
       }
       console.error('[ERRO MySQL ao criar edição]:', err.message);
@@ -394,7 +406,8 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
       conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME, dateStrings: true });
       const atual = await consultarEdicao(conn, id);
       if (!atual) return res.status(404).send('Edição não encontrada.');
-      if (atual.status === 'Fechada') return res.status(409).send('Reabra a edição antes de alterar seus dados.');
+      if (atual.status === 'Fechada')
+        return res.status(409).send('Reabra a edição antes de alterar seus dados.');
 
       let dados;
       try {
@@ -404,7 +417,7 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
           edicaoForm: { ...req.body, id },
           erroFormulario: err.message,
           abrirModal: true,
-          httpStatus: 400
+          httpStatus: 400,
         });
       }
 
@@ -412,18 +425,26 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
         `UPDATE edicoes SET numero = ?, data = ?, titulo = ?, responsavel = ?,
           observacao = ?, arquivo = ?, atualizado_em = ? WHERE id = ?`,
         [
-          dados.numero, dados.data, dados.titulo, dados.responsavel,
-          dados.observacao, dados.arquivo, dataHoraParaMySQL(new Date().toISOString()), id
-        ]
+          dados.numero,
+          dados.data,
+          dados.titulo,
+          dados.responsavel,
+          dados.observacao,
+          dados.arquivo,
+          dataHoraParaMySQL(new Date().toISOString()),
+          id,
+        ],
       );
-      return res.redirect(`/edicoes?mensagem=${encodeURIComponent('Edição atualizada com sucesso.')}`);
+      return res.redirect(
+        `/edicoes?mensagem=${encodeURIComponent('Edição atualizada com sucesso.')}`,
+      );
     } catch (err) {
       if (err.code === 'ER_DUP_ENTRY') {
         return await renderizarTabelaEdicoes(conn, res, {
           edicaoForm: { ...req.body, id },
           erroFormulario: 'Já existe outra edição com esse número ou data.',
           abrirModal: true,
-          httpStatus: 409
+          httpStatus: 409,
         });
       }
       console.error('[ERRO MySQL ao atualizar edição]:', err.message);
@@ -436,35 +457,44 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
   app.post('/edicoes/:id/status', exigirAutenticacao, async (req, res) => {
     const id = idValido(req.params.id);
     const status = req.body.status;
-    if (!id || !STATUS_EDICOES.includes(status)) return res.status(400).send('Edição ou status inválido.');
+    if (!id || !STATUS_EDICOES.includes(status))
+      return res.status(400).send('Edição ou status inválido.');
     let conn;
     try {
       conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME });
-      const [edicoes] = await conn.execute('SELECT id, status FROM edicoes WHERE id = ? LIMIT 1', [id]);
+      const [edicoes] = await conn.execute('SELECT id, status FROM edicoes WHERE id = ? LIMIT 1', [
+        id,
+      ]);
       if (!edicoes.length) return res.status(404).send('Edição não encontrada.');
       if (status === 'Editando') {
         const [outrasAbertas] = await conn.execute(
           "SELECT id FROM edicoes WHERE status = 'Editando' AND id <> ? LIMIT 1",
-          [id]
+          [id],
         );
         if (outrasAbertas.length) {
-          return res.redirect(`/edicoes?mensagem=${encodeURIComponent('Feche a edição em andamento antes de reabrir esta.')}`);
+          return res.redirect(
+            `/edicoes?mensagem=${encodeURIComponent('Feche a edição em andamento antes de reabrir esta.')}`,
+          );
         }
       } else {
         const [[contagem]] = await conn.execute(
           "SELECT COUNT(*) AS total FROM materias WHERE edicao_id = ? AND status = 'Ativo'",
-          [id]
+          [id],
         );
         if (Number(contagem.total) === 0) {
-          return res.redirect(`/edicoes?mensagem=${encodeURIComponent('Não é possível fechar uma edição sem matérias ativas.')}`);
+          return res.redirect(
+            `/edicoes?mensagem=${encodeURIComponent('Não é possível fechar uma edição sem matérias ativas.')}`,
+          );
         }
       }
       const agora = dataHoraParaMySQL(new Date().toISOString());
       await conn.execute(
         'UPDATE edicoes SET status = ?, fechada_em = ?, atualizado_em = ? WHERE id = ?',
-        [status, status === 'Fechada' ? agora : null, agora, id]
+        [status, status === 'Fechada' ? agora : null, agora, id],
       );
-      return res.redirect(`/edicoes?mensagem=${encodeURIComponent(status === 'Fechada' ? 'Edição fechada.' : 'Edição reaberta para edição.')}`);
+      return res.redirect(
+        `/edicoes?mensagem=${encodeURIComponent(status === 'Fechada' ? 'Edição fechada.' : 'Edição reaberta para edição.')}`,
+      );
     } catch (err) {
       console.error('[ERRO MySQL ao alterar status de edição]:', err.message);
       return res.status(500).send('Não foi possível alterar o status da edição.');
@@ -479,13 +509,17 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
     let conn;
     try {
       conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME });
-      const [registros] = await conn.execute('SELECT status FROM edicoes WHERE id = ? LIMIT 1', [id]);
+      const [registros] = await conn.execute('SELECT status FROM edicoes WHERE id = ? LIMIT 1', [
+        id,
+      ]);
       if (!registros.length) return res.status(404).send('Edição não encontrada.');
       if (registros[0].status === 'Fechada') {
         return res.status(409).send('Reabra a edição antes de excluí-la.');
       }
       await conn.execute('DELETE FROM edicoes WHERE id = ?', [id]);
-      return res.redirect(`/edicoes?mensagem=${encodeURIComponent('Edição e suas matérias excluídas.')}`);
+      return res.redirect(
+        `/edicoes?mensagem=${encodeURIComponent('Edição e suas matérias excluídas.')}`,
+      );
     } catch (err) {
       console.error('[ERRO MySQL ao excluir edição]:', err.message);
       return res.status(500).send('Não foi possível excluir a edição.');
@@ -503,12 +537,14 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
       if (typeof req.query.editar === 'string' && req.query.editar) {
         const materiaId = idValido(req.query.editar);
         if (!materiaId) return res.status(400).send('ID de matéria inválido.');
-        return res.redirect(`/edicoes/${encodeURIComponent(id)}/materias/${encodeURIComponent(materiaId)}`);
+        return res.redirect(
+          `/edicoes/${encodeURIComponent(id)}/materias/${encodeURIComponent(materiaId)}`,
+        );
       }
       const busca = typeof req.query.q === 'string' ? req.query.q.trim() : '';
       return await renderizarPaginaMaterias(conn, res, id, {
         busca,
-        mensagem: typeof req.query.mensagem === 'string' ? req.query.mensagem : ''
+        mensagem: typeof req.query.mensagem === 'string' ? req.query.mensagem : '',
       });
     } catch (err) {
       console.error('[ERRO MySQL ao carregar matérias]:', err.message);
@@ -527,7 +563,9 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
       const edicao = await consultarEdicao(conn, id);
       if (!edicao) return res.status(404).send('Edição não encontrada.');
       if (edicao.status === 'Fechada') {
-        return res.redirect(`/edicoes/${encodeURIComponent(id)}/materias?mensagem=${encodeURIComponent('Reabra a edição antes de cadastrar matérias.')}`);
+        return res.redirect(
+          `/edicoes/${encodeURIComponent(id)}/materias?mensagem=${encodeURIComponent('Reabra a edição antes de cadastrar matérias.')}`,
+        );
       }
 
       let colunaForcada;
@@ -554,7 +592,7 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
       conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME, dateStrings: true });
       const edicao = await consultarEdicao(conn, id);
       if (!edicao) return res.status(404).send('Edição não encontrada.');
-      const materia = edicao.materias.find(item => item.id === materiaId);
+      const materia = edicao.materias.find((item) => item.id === materiaId);
       if (!materia) return res.status(404).send('Matéria não encontrada nesta edição.');
       return await renderizarCadastroMateria(conn, res, id, materia, { edicao });
     } catch (err) {
@@ -573,35 +611,52 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
       conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME, dateStrings: true });
       const edicao = await consultarEdicao(conn, edicaoId);
       if (!edicao) return res.status(404).send('Edição não encontrada.');
-      if (edicao.status === 'Fechada') return res.status(409).send('Reabra a edição antes de alterar as matérias.');
+      if (edicao.status === 'Fechada')
+        return res.status(409).send('Reabra a edição antes de alterar as matérias.');
 
       let materia;
       try {
         materia = normalizarMateria(req.body);
       } catch (err) {
-        return await renderizarCadastroMateria(conn, res, edicaoId, {
-          ...req.body,
-          id: req.body.id || ''
-        }, {
-          edicao,
-          erroFormulario: err.message,
-          httpStatus: 400
-        });
+        return await renderizarCadastroMateria(
+          conn,
+          res,
+          edicaoId,
+          {
+            ...req.body,
+            id: req.body.id || '',
+          },
+          {
+            edicao,
+            erroFormulario: err.message,
+            httpStatus: 400,
+          },
+        );
       }
 
       const id = materia.id || gerarId('mat');
-      const existe = materia.id && edicao.materias.some(item => item.id === materia.id);
+      const existe = materia.id && edicao.materias.some((item) => item.id === materia.id);
       const valores = [
-        materia.coluna, materia.ordem, materia.tipo, materia.status, materia.categoria,
-        materia.titulo, materia.link, materia.resumo, materia.autor, materia.tempo,
-        materia.imagem, materia.legenda, dataHoraParaMySQL(new Date().toISOString())
+        materia.coluna,
+        materia.ordem,
+        materia.tipo,
+        materia.status,
+        materia.categoria,
+        materia.titulo,
+        materia.link,
+        materia.resumo,
+        materia.autor,
+        materia.tempo,
+        materia.imagem,
+        materia.legenda,
+        dataHoraParaMySQL(new Date().toISOString()),
       ];
       if (existe) {
         await conn.execute(
           `UPDATE materias SET coluna = ?, ordem = ?, tipo = ?, status = ?, categoria = ?,
             titulo = ?, link = ?, resumo = ?, autor = ?, tempo = ?, imagem = ?, legenda = ?,
             atualizado_em = ? WHERE edicao_id = ? AND id = ?`,
-          [...valores, edicaoId, id]
+          [...valores, edicaoId, id],
         );
       } else {
         if (materia.id) return res.status(404).send('Matéria não encontrada nesta edição.');
@@ -612,14 +667,31 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
             resumo, autor, tempo, imagem, legenda, criado_em, atualizado_em
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            edicaoId, id, materia.coluna, materia.ordem, materia.tipo, materia.status,
-            materia.categoria, materia.titulo, materia.link, materia.resumo, materia.autor,
-            materia.tempo, materia.imagem, materia.legenda, agora, agora
-          ]
+            edicaoId,
+            id,
+            materia.coluna,
+            materia.ordem,
+            materia.tipo,
+            materia.status,
+            materia.categoria,
+            materia.titulo,
+            materia.link,
+            materia.resumo,
+            materia.autor,
+            materia.tempo,
+            materia.imagem,
+            materia.legenda,
+            agora,
+            agora,
+          ],
         );
       }
-      const mensagem = existe ? 'Matéria atualizada com sucesso.' : 'Matéria cadastrada com sucesso.';
-      return res.redirect(`/edicoes/${encodeURIComponent(edicaoId)}/materias?mensagem=${encodeURIComponent(mensagem)}`);
+      const mensagem = existe
+        ? 'Matéria atualizada com sucesso.'
+        : 'Matéria cadastrada com sucesso.';
+      return res.redirect(
+        `/edicoes/${encodeURIComponent(edicaoId)}/materias?mensagem=${encodeURIComponent(mensagem)}`,
+      );
     } catch (err) {
       console.error('[ERRO MySQL ao salvar matéria]:', err.message);
       return res.status(500).send('Não foi possível salvar a matéria.');
@@ -635,15 +707,21 @@ function registerNewsRoutes(app, { mysql, dbConfig, DB_NAME, exigirAutenticacao 
     let conn;
     try {
       conn = await mysql.createConnection({ ...dbConfig, database: DB_NAME });
-      const [edicoes] = await conn.execute('SELECT status FROM edicoes WHERE id = ? LIMIT 1', [edicaoId]);
+      const [edicoes] = await conn.execute('SELECT status FROM edicoes WHERE id = ? LIMIT 1', [
+        edicaoId,
+      ]);
       if (!edicoes.length) return res.status(404).send('Edição não encontrada.');
-      if (edicoes[0].status === 'Fechada') return res.status(409).send('Reabra a edição antes de excluir matérias.');
+      if (edicoes[0].status === 'Fechada')
+        return res.status(409).send('Reabra a edição antes de excluir matérias.');
       const [resultado] = await conn.execute(
         'DELETE FROM materias WHERE edicao_id = ? AND id = ?',
-        [edicaoId, materiaId]
+        [edicaoId, materiaId],
       );
-      if (resultado.affectedRows === 0) return res.status(404).send('Matéria não encontrada nesta edição.');
-      return res.redirect(`/edicoes/${encodeURIComponent(edicaoId)}/materias?mensagem=${encodeURIComponent('Matéria excluída.')}`);
+      if (resultado.affectedRows === 0)
+        return res.status(404).send('Matéria não encontrada nesta edição.');
+      return res.redirect(
+        `/edicoes/${encodeURIComponent(edicaoId)}/materias?mensagem=${encodeURIComponent('Matéria excluída.')}`,
+      );
     } catch (err) {
       console.error('[ERRO MySQL ao excluir matéria]:', err.message);
       return res.status(500).send('Não foi possível excluir a matéria.');
