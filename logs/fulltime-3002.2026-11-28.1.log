@@ -1,0 +1,3 @@
+{"level":30,"time":1795878167576,"port":3002,"msg":"FullTime Technology rodando em: http://127.0.0.1:3002"}
+{"level":30,"time":1795878167576,"port":3002,"msg":"Banco MySQL \"fulltime_db\" conectado e pronto!"}
+{"level":30,"time":1795878168170,"port":3002,"req":{"id":1,"method":"GET","url":"/","query":{},"params":{},"headers":{"host":"127.0.0.1:3002","user-agent":"curl/8.19.0","accept":"*/*"},"remoteAddress":"127.0.0.1","remotePort":60558},"port":3002,"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"text/html; charset=utf-8","content-length":"26345","etag":"W/\"66e9-Er8nT0Iq3isx+gt1Am3sGZ37CEc\""}},"responseTime":13,"msg":"GET / -> 200 (13ms)"}

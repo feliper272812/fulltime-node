@@ -1,0 +1,478 @@
+
+<!-- /////////////////////////////////////////////////////////////
+
+  ARQUIVO: views/index.ejs
+  TELA INICIAL DE SISTEMA COM LOGIN AUTÊNTICO POR BANCO MYSQL
+
+  Tecnologias:
+  - Node.js + Express + EJS
+  - MySQL Portátil
+  - Bootstrap 5.3.3
+
+  Tema:
+  - Light
+  - Dark
+  - Auto
+
+  Autor: Felipe Rodrigues - FullTime Technology
+
+///////////////////////////////////////////////////////////// -->
+
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FullTime Technology</title>
+
+    <!-- ///////////////////////////////////////////////////////// -->
+    <!--         SCRIPT OFICIAL DE TEMAS BOOTSTRAP 5.3             -->
+    <!-- ///////////////////////////////////////////////////////// -->
+
+    <script src="/js/color-modes.js"></script>
+    
+    <!-- ///////////////////////////////////////////////////////// -->
+    <!-- Controle de tema nativo imediato para evitar flash visual -->
+    <!-- ///////////////////////////////////////////////////////// -->
+
+    <script>
+        (() => {
+            const getStoredTheme = () => localStorage.getItem('theme');
+            const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const resolveTheme = (tema) => tema === 'auto' ? getSystemTheme() : tema;
+            document.documentElement.setAttribute('data-bs-theme', resolveTheme(getStoredTheme() || 'auto'));
+        })();
+    </script>
+
+    <!-- BOOTSTRAP 5.3.3 CSS LOCAL -->
+    <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet">
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let cssCarregado = false;
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    let sheet = document.styleSheets[i];
+                    if (sheet.href && sheet.href.indexOf("bootstrap.min.css") !== -1) {
+                        if (sheet.cssRules && sheet.cssRules.length > 0) {
+                            cssCarregado = true;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // Captura restrições de segurança de CORS se houverem
+                }
+            }
+
+            if (!cssCarregado) {
+                alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+                console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
+                
+                let cdn = document.createElement("link");
+                cdn.rel = "stylesheet";
+                cdn.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css";
+                cdn.integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH";
+                cdn.crossOrigin = "anonymous";
+                document.head.appendChild(cdn);
+            }
+        });
+    </script>
+
+    <style>
+        html, body {
+            height: 100vh;
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            transition: background-color 0.3s ease;
+            padding-top: 56px;
+        }
+
+        [data-bs-theme="dark"] body {
+            background-color: #121212;
+        }
+
+        /* CONFIGURAÇÃO DA MOEDA 3D NO CENTRO */
+        .coin-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .coin {
+            width: 330px;
+            height: 390px;
+            transform-style: preserve-3d;
+            animation: girarMoeda 6s linear infinite;
+            will-change: transform;
+            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.35));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .coin img {
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: transparent;
+        }
+        .coin h4 {
+            margin-top: 15px;
+            margin-bottom: 0;
+            white-space: nowrap;
+            backface-visibility: visible;
+        }
+        @keyframes girarMoeda {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(180deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        /* FIXA O MODAL DO LOGIN NO LADO ESQUERDO DA TELA */
+        #loginModal .modal-dialog {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%) !important;
+            margin: 0;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        /* TRAVA O FUNDO SEM OPACIDADE OU BLUR */
+        body.autenticacao-pendente {
+            overflow: hidden;
+        }
+        body.autenticacao-pendente nav, 
+        body.autenticacao-pendente footer, 
+        body.autenticacao-pendente .bd-mode-toggle, 
+        body.autenticacao-pendente main {
+            pointer-events: none;
+            user-select: none;
+        }
+        #loginModal {
+            pointer-events: auto !important;
+        }
+
+        .welcome-avatar {
+            width: 112px;
+            height: 112px;
+            object-fit: cover;
+            border: 4px solid var(--bs-success-bg-subtle);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+        }
+
+        .terra-wrapper {
+            min-height: calc(100vh - 105px);
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100 <%= usuarioLogado ? '' : 'autenticacao-pendente' %>">
+
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+    <!-- ///////      BARRA DE NAVEGAÇÃO FIXA (NAVBAR VIA EJS PARTIAL) /////////////////// -->
+    <!-- //////////////////////////////////////////////////////////////////////////////////-->
+
+    <%- include('partials/nav-sistema') %>
+
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+    <!-- CONTEÚDO CENTRAL (TERRA GIRANDO) -->
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+    <div class="d-flex justify-content-center align-items-center terra-wrapper">
+        <img src="/images/Logotipos/Terra-Girando2-sem-fundo.gif"
+             alt="Terra girando"
+             class="img-fluid">
+    </div>
+
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+    <!-- MODAL DE LOGIN -->
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+    <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="loginModalLabel">Acesso ao Sistema - FullTime</h5>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label text-secondary">Usuário</label>
+                            <input type="text" class="form-control" id="username" name="usuario" placeholder="Digite seu usuário" autocomplete="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label text-secondary">Senha</label>
+                            <input type="password" class="form-control" id="password" name="senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+                        </div>
+
+                        <div class="mb-3 text-center">
+                            <% if (dbConectado && totalUsuarios > 0) { %>
+                                <span id="dbStatusBadge" class="badge bg-success p-2 w-100">
+                                    MySQL Conectado (<%= totalUsuarios %> usuário(s) ativo(s))
+                                </span>
+                            <% } else if (dbConectado) { %>
+                                <span id="dbStatusBadge" class="badge bg-warning text-dark p-2 w-100">
+                                    MySQL Conectado (0 usuários cadastrados)
+                                </span>
+                            <% } else { %>
+                                <span id="dbStatusBadge" class="badge bg-danger p-2 w-100">
+                                    MySQL Desconectado (Inicie o servidor)
+                                </span>
+                            <% } %>
+                        </div>
+
+                        <% if (dbConectado && !(totalUsuarios > 0)) { %>
+                            <div class="mb-3 d-none" id="jsonImportControls">
+                                <label for="btnLoadJson" class="btn btn-sm btn-outline-success w-100 fw-bold">
+                                    📂 Selecionar arquivo JSON de usuários
+                                </label>
+                                <input type="file" id="btnLoadJson" accept=".json" class="d-none" onchange="carregarBaseUsuarios(event)">
+                            </div>
+                        <% } %>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success py-2 fw-bold">Entrar e Liberar Sistema</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="welcomeModalLabel">Acesso autorizado</h5>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <img id="welcomeAvatar" class="welcome-avatar rounded-circle mb-3"
+                         src="/images/Usuarios/Felipe.jpg" alt="">
+                    <h4 id="welcomeUserName" class="mb-1"></h4>
+                    <p id="welcomeDepartment" class="text-secondary mb-0"></p>
+                    <p class="mt-3 mb-0">Sistema liberado.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" id="welcomeContinueButton" class="btn btn-success px-4" data-bs-dismiss="modal">Continuar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- //////////////////////////////////////////////////////// -->
+    <!-- RODAPÉ FIXO (FOOTER VIA EJS PARTIAL) -->
+    <!-- //////////////////////////////////////////////////////// -->
+
+    <%- include('partials/footer') %>
+
+    <!-- /////////////////////////////////////////// -->
+    <!-- DEPENDÊNCIAS DE SCRIPTS DO ECOSSISTEMA CORE -->
+    <!-- /////////////////////////////////////////// -->
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        if (typeof bootstrap === 'undefined') {
+            alert('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            console.warn('bootstrap.bundle.min.js local não carregou. Usando CDN como reserva.');
+            const cdnScript = document.createElement('script');
+            cdnScript.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';
+            cdnScript.integrity = 'sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz';
+            cdnScript.crossOrigin = 'anonymous';
+            document.body.appendChild(cdnScript);
+        }
+    </script>
+
+    <script>
+        // Importa o arquivo JSON selecionado diretamente para o MySQL via API
+        function carregarBaseUsuarios(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    let dados = JSON.parse(e.target.result);
+                    if (!Array.isArray(dados)) {
+                        dados = [dados];
+                    }
+
+                    if (!dados.length) {
+                        alert("O arquivo JSON de usuários está vazio.");
+                        return;
+                    }
+
+                    const resposta = await fetch('/importar-usuarios', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ usuarios: dados })
+                    });
+
+                    const resultado = await resposta.json();
+
+                    if (!resposta.ok || !resultado.sucesso) {
+                        alert(resultado.mensagem || "Erro ao importar usuários para o MySQL.");
+                        return;
+                    }
+
+                    const totalUsuarios = Number(resultado.totalUsuarios) || 0;
+                    const badge = document.getElementById("dbStatusBadge");
+                    if (badge) {
+                        badge.textContent = totalUsuarios > 0
+                            ? `MySQL Conectado (${totalUsuarios} usuário(s) ativo(s))`
+                            : "MySQL Conectado (0 usuários cadastrados)";
+                        badge.className = totalUsuarios > 0
+                            ? "badge bg-success p-2 w-100"
+                            : "badge bg-warning text-dark p-2 w-100";
+                    }
+                    if (totalUsuarios > 0) {
+                        const importControls = document.getElementById("jsonImportControls");
+                        if (importControls) importControls.remove();
+                    }
+
+                    alert(resultado.mensagem);
+                    setTimeout(() => {
+                        const inputUsuario = document.getElementById("username");
+                        if (inputUsuario) inputUsuario.focus();
+                    }, 50);
+
+                } catch (err) {
+                    alert("Erro crítico ao processar o JSON: " + err.message);
+                }
+                event.target.value = "";
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const estaLogado = <%= usuarioLogado ? 'true' : 'false' %>;
+            const importacaoDisponivel = <%= dbConectado && !(totalUsuarios > 0) ? 'true' : 'false' %>;
+            const loginModalEl = document.getElementById('loginModal');
+
+            if (typeof bootstrap === 'undefined') {
+                alert('Não foi possível carregar o Bootstrap. Atualize a página ou restaure o arquivo local.');
+                return;
+            }
+
+            const loginModal = new bootstrap.Modal(loginModalEl);
+            const welcomeModalEl = document.getElementById('welcomeModal');
+            const welcomeModal = new bootstrap.Modal(welcomeModalEl);
+            const welcomeContinueButton = document.getElementById('welcomeContinueButton');
+            const loginForm = document.getElementById('loginForm');
+
+            welcomeModalEl.addEventListener('shown.bs.modal', function () {
+                welcomeContinueButton.focus();
+            });
+
+            welcomeModalEl.addEventListener('hidden.bs.modal', function () {
+                window.location.reload();
+            });
+
+            loginModalEl.addEventListener('shown.bs.modal', function () {
+                document.getElementById("username").focus();
+            });
+
+            if (estaLogado) {
+                document.body.classList.remove('autenticacao-pendente');
+            } else {
+                document.body.classList.add('autenticacao-pendente');
+                loginModal.show();
+            }
+
+            if (importacaoDisponivel) {
+                const desejaImportar = window.confirm(
+                    'O MySQL está conectado, mas não há usuários cadastrados. Deseja importar usuários de um arquivo JSON? Se confirmar, o botão para selecionar o arquivo será exibido.'
+                );
+                if (desejaImportar) {
+                    document.getElementById('jsonImportControls').classList.remove('d-none');
+                }
+            }
+
+            // Logout global via sessão no servidor
+            document.addEventListener('click', async function (event) {
+                const alvoSair = event.target.closest('#btnSair');
+                if (alvoSair) {
+                    event.preventDefault();
+                    await fetch('/logout', { method: 'POST' });
+                    window.location.href = '/';
+                }
+            });
+
+            // Envio do formulário de login para validação real no MySQL
+            loginForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const userDigitado = document.getElementById("username").value.trim();
+                const senhaDigitada = document.getElementById("password").value.trim();
+
+                try {
+                    const resposta = await fetch('/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            usuario: userDigitado,
+                            senha: senhaDigitada
+                        })
+                    });
+
+                    const resultado = await resposta.json();
+
+                    if (!resposta.ok || !resultado.sucesso) {
+                        alert(resultado.mensagem || "Falha na autenticação!");
+                        return;
+                    }
+
+                    const usuario = resultado.usuario;
+                    if (!usuario) {
+                        alert("O login foi aceito, mas os dados do usuário não foram retornados.");
+                        return;
+                    }
+
+                    const imagemPadrao = '/images/Usuarios/Felipe.jpg';
+                    const imagemUsuario = usuario.imagem || imagemPadrao;
+                    const avatarBoasVindas = document.getElementById('welcomeAvatar');
+                    avatarBoasVindas.onerror = function () {
+                        this.onerror = null;
+                        this.src = imagemPadrao;
+                    };
+                    avatarBoasVindas.src = imagemUsuario;
+                    avatarBoasVindas.alt = `Foto de ${usuario.usuario}`;
+                    document.getElementById('welcomeUserName').textContent = `Bem-vindo, ${usuario.usuario}!`;
+
+                    const departamento = document.getElementById('welcomeDepartment');
+                    departamento.textContent = usuario.departamento || '';
+                    departamento.classList.toggle('d-none', !usuario.departamento);
+
+                    const avatarNavbar = document.getElementById('navbarUserAvatar');
+                    if (avatarNavbar) {
+                        avatarNavbar.onerror = function () {
+                            this.onerror = null;
+                            this.src = imagemPadrao;
+                        };
+                        avatarNavbar.src = imagemUsuario;
+                        avatarNavbar.alt = usuario.usuario || 'Usuário';
+                    }
+
+                    loginModalEl.addEventListener('hidden.bs.modal', function () {
+                        document.body.classList.remove('autenticacao-pendente');
+                        welcomeModal.show();
+                    }, { once: true });
+                    loginModal.hide();
+                } catch (err) {
+                    alert("Erro de comunicação com o servidor: " + err.message);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

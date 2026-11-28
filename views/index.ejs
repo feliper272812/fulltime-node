@@ -1,4 +1,3 @@
-
 <!-- /////////////////////////////////////////////////////////////
 
   ARQUIVO: views/index.ejs
@@ -48,27 +47,35 @@
     <link id="bootstrap-css-local" href="/css/bootstrap.min.css" rel="stylesheet">
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let cssCarregado = false;
-            for (let i = 0; i < document.styleSheets.length; i++) {
-                try {
-                    let sheet = document.styleSheets[i];
-                    if (sheet.href && sheet.href.indexOf("bootstrap.min.css") !== -1) {
-                        if (sheet.cssRules && sheet.cssRules.length > 0) {
-                            cssCarregado = true;
-                            break;
-                        }
-                    }
-                } catch (e) {
-                    // Captura restrições de segurança de CORS se houverem
-                }
-            }
 
+
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const cssCarregado = Array.from(document.styleSheets).some((sheet) => {
+                try {
+
+
+
+
+
+
+
+
+
+
+
+
+                    return Boolean(sheet.href?.includes("bootstrap.min.css") && sheet.cssRules?.length > 0);
+                } catch {
+                    return false;
+                }
+            });
             if (!cssCarregado) {
                 alert('bootstrap.min.css local não carregou. Usando CDN como reserva.');
                 console.warn('bootstrap.min.css local não carregou. Usando CDN como reserva.');
                 
-                let cdn = document.createElement("link");
+
+                const cdn = document.createElement("link");
                 cdn.rel = "stylesheet";
                 cdn.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css";
                 cdn.integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH";
@@ -294,18 +301,24 @@
 
     <script>
         // Importa o arquivo JSON selecionado diretamente para o MySQL via API
-        function carregarBaseUsuarios(event) {
-            const file = event.target.files[0];
+
+
+        const carregarBaseUsuarios = (event) => {
+            const [file] = event.target.files;
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async function (e) {
-                try {
-                    let dados = JSON.parse(e.target.result);
-                    if (!Array.isArray(dados)) {
-                        dados = [dados];
-                    }
 
+            reader.onload = async ({ target }) => {
+                try {
+
+
+
+
+
+
+                    const parsedData = JSON.parse(target.result);
+                    const dados = Array.isArray(parsedData) ? parsedData : [parsedData];
                     if (!dados.length) {
                         alert("O arquivo JSON de usuários está vazio.");
                         return;
@@ -334,26 +347,141 @@
                             ? "badge bg-success p-2 w-100"
                             : "badge bg-warning text-dark p-2 w-100";
                     }
+
                     if (totalUsuarios > 0) {
-                        const importControls = document.getElementById("jsonImportControls");
-                        if (importControls) importControls.remove();
+
+
+                        document.getElementById("jsonImportControls")?.remove();
                     }
 
                     alert(resultado.mensagem);
                     setTimeout(() => {
-                        const inputUsuario = document.getElementById("username");
-                        if (inputUsuario) inputUsuario.focus();
+
+
+                        document.getElementById("username")?.focus();
                     }, 50);
 
                 } catch (err) {
-                    alert("Erro crítico ao processar o JSON: " + err.message);
-                }
+
+
+                    alert(`Erro crítico ao processar o JSON: ${err.message}`);
+                } finally {
                 event.target.value = "";
-            };
-            reader.readAsText(file, "UTF-8");
+
+
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+            reader.readAsText(file, "UTF-8");
+                        };
+
+
+
+
+        document.addEventListener("DOMContentLoaded", () => {
             const estaLogado = <%= usuarioLogado ? 'true' : 'false' %>;
             const importacaoDisponivel = <%= dbConectado && !(totalUsuarios > 0) ? 'true' : 'false' %>;
             const loginModalEl = document.getElementById('loginModal');
@@ -363,65 +491,68 @@
                 return;
             }
 
+
             const loginModal = new bootstrap.Modal(loginModalEl);
             const welcomeModalEl = document.getElementById('welcomeModal');
             const welcomeModal = new bootstrap.Modal(welcomeModalEl);
             const welcomeContinueButton = document.getElementById('welcomeContinueButton');
             const loginForm = document.getElementById('loginForm');
-
-            welcomeModalEl.addEventListener('shown.bs.modal', function () {
+            welcomeModalEl.addEventListener('shown.bs.modal', () => {
                 welcomeContinueButton.focus();
             });
 
-            welcomeModalEl.addEventListener('hidden.bs.modal', function () {
+            welcomeModalEl.addEventListener('hidden.bs.modal', () => {
                 window.location.reload();
             });
 
-            loginModalEl.addEventListener('shown.bs.modal', function () {
-                document.getElementById("username").focus();
+            loginModalEl.addEventListener('shown.bs.modal', () => {
+                document.getElementById("username")?.focus();
             });
 
             if (estaLogado) {
-                document.body.classList.remove('autenticacao-pendente');
+                        document.body.classList.remove('autenticacao-pendente');
+
+
+
+
+
             } else {
                 document.body.classList.add('autenticacao-pendente');
                 loginModal.show();
-            }
+                }
+
 
             if (importacaoDisponivel) {
                 const desejaImportar = window.confirm(
                     'O MySQL está conectado, mas não há usuários cadastrados. Deseja importar usuários de um arquivo JSON? Se confirmar, o botão para selecionar o arquivo será exibido.'
                 );
                 if (desejaImportar) {
-                    document.getElementById('jsonImportControls').classList.remove('d-none');
+                    document.getElementById('jsonImportControls')?.classList.remove('d-none');
                 }
             }
 
             // Logout global via sessão no servidor
-            document.addEventListener('click', async function (event) {
+            document.addEventListener('click', async (event) => {
                 const alvoSair = event.target.closest('#btnSair');
                 if (alvoSair) {
                     event.preventDefault();
                     await fetch('/logout', { method: 'POST' });
                     window.location.href = '/';
                 }
-            });
+        });
 
             // Envio do formulário de login para validação real no MySQL
-            loginForm.addEventListener('submit', async function (event) {
+            loginForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
 
-                const userDigitado = document.getElementById("username").value.trim();
-                const senhaDigitada = document.getElementById("password").value.trim();
+                const usuario = document.getElementById("username").value.trim();
+                const senha = document.getElementById("password").value.trim();
 
                 try {
                     const resposta = await fetch('/login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            usuario: userDigitado,
-                            senha: senhaDigitada
-                        })
+                        body: JSON.stringify({ usuario, senha })
                     });
 
                     const resultado = await resposta.json();
@@ -431,44 +562,45 @@
                         return;
                     }
 
-                    const usuario = resultado.usuario;
-                    if (!usuario) {
+                    const { usuario: dadosUsuario } = resultado;
+                    if (!dadosUsuario) {
                         alert("O login foi aceito, mas os dados do usuário não foram retornados.");
                         return;
                     }
 
                     const imagemPadrao = '/images/Usuarios/Felipe.jpg';
-                    const imagemUsuario = usuario.imagem || imagemPadrao;
+                    const imagemUsuario = dadosUsuario.imagem || imagemPadrao;
                     const avatarBoasVindas = document.getElementById('welcomeAvatar');
-                    avatarBoasVindas.onerror = function () {
-                        this.onerror = null;
-                        this.src = imagemPadrao;
+
+                    avatarBoasVindas.onerror = () => {
+                        avatarBoasVindas.onerror = null;
+                        avatarBoasVindas.src = imagemPadrao;
                     };
                     avatarBoasVindas.src = imagemUsuario;
-                    avatarBoasVindas.alt = `Foto de ${usuario.usuario}`;
-                    document.getElementById('welcomeUserName').textContent = `Bem-vindo, ${usuario.usuario}!`;
+                    avatarBoasVindas.alt = `Foto de ${dadosUsuario.usuario}`;
+                    document.getElementById('welcomeUserName').textContent = `Bem-vindo, ${dadosUsuario.usuario}!`;
 
                     const departamento = document.getElementById('welcomeDepartment');
-                    departamento.textContent = usuario.departamento || '';
-                    departamento.classList.toggle('d-none', !usuario.departamento);
+                    departamento.textContent = dadosUsuario.departamento || '';
+                    departamento.classList.toggle('d-none', !dadosUsuario.departamento);
 
                     const avatarNavbar = document.getElementById('navbarUserAvatar');
                     if (avatarNavbar) {
-                        avatarNavbar.onerror = function () {
-                            this.onerror = null;
-                            this.src = imagemPadrao;
+                        avatarNavbar.onerror = () => {
+                            avatarNavbar.onerror = null;
+                            avatarNavbar.src = imagemPadrao;
                         };
                         avatarNavbar.src = imagemUsuario;
-                        avatarNavbar.alt = usuario.usuario || 'Usuário';
+                        avatarNavbar.alt = dadosUsuario.usuario || 'Usuário';
                     }
 
-                    loginModalEl.addEventListener('hidden.bs.modal', function () {
+                    loginModalEl.addEventListener('hidden.bs.modal', () => {
                         document.body.classList.remove('autenticacao-pendente');
                         welcomeModal.show();
                     }, { once: true });
                     loginModal.hide();
                 } catch (err) {
-                    alert("Erro de comunicação com o servidor: " + err.message);
+                    alert(`Erro de comunicação com o servidor: ${err.message}`);
                 }
             });
         });
